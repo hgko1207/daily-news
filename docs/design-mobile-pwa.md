@@ -46,7 +46,7 @@ Claude Desktop 스케줄러가 매일 약 10:08 KST에 6개 카테고리 브리�
 
 - **가장 멋진 버전:** "브리핑이 스스로 채점되는 앱". 사이드카에 `claims[]`(날짜·대상·예상값)를 넣고 날짜가 지나면 실제 결과를 기록해 "지난주 브리핑이 맞췄나?" 카드를 띄운다. 액션은 체크박스로 만들고 완료 상태는 localStorage에 저장한다. 종목별 언급 타임라인을 둔다.
 - **핵심 신호:** 프롬프트까지 바꾸겠다는 결정은 사용자가 원하는 것이 단순한 읽기 앱이 아니라 날짜를 가로지르는 구조화 데이터, 즉 개인 대시보드라는 뜻이다.
-- **50% 해결 도구:** Quartz v4는 참고만 한다(React가 아니고 문서 사이트형 UX). PWA는 vite-plugin-pwa, 검색은 MiniSearch.
+- **50% 해결 도구:** Quartz v4는 참고만 한다(React가 아니고 문서 사이트형 UX). PWA는 vite-plugin-pwa, 검색은 MiniSearch(→ Eng Review에서 부분문자열 스캔으로 변경).
 - **반박:** 사이드카 스키마는 써 본 뒤에 정해야 한다 → 전제 7로 반영. 첫 주말에는 Montage를 빼자 → **채택하지 않음.** 인증은 `read:packages` PAT로 해결하고(배포 섹션 참고), 1시간짜리 스파이크로 가장 먼저 검증한다.
 
 ## Approaches Considered
@@ -76,14 +76,20 @@ daily-news/
 ├─ README.md                       # 새로 작성
 ├─ app/
 │  ├─ package.json, vite.config.ts, .npmrc
-│  ├─ scripts/build-data.ts        # md → public/data/*.json
-│  ├─ scripts/categories.ts        # 폴더명 ↔ slug/이모지/라벨 매핑
-│  ├─ src/                         # React 앱
+│  ├─ scripts/parse.ts             # 순수 함수: md 문자열 → Entry, 카테고리 매핑 포함
+│  ├─ scripts/build-data.ts        # glob·읽기, public/data/*.json 쓰기, STEP_SUMMARY 리포트
+│  ├─ scripts/parse.test.ts        # vitest, 실제 저장소 파일 대상
+│  ├─ src/main.tsx, App.tsx        # ThemeProvider, HashRouter, 하단 탭
+│  ├─ src/data.ts                  # fetch·캐시, KST 오늘 날짜(dayjs), 새 데이터 감지
+│  ├─ src/markdown.tsx             # react-markdown → Montage 타이포 매핑
+│  ├─ src/routes/                  # Today, Day, Calendar, Collect, Search, Settings
 │  └─ public/icons/                # PWA 아이콘
 └─ .github/workflows/deploy.yml
 ```
 
-### 카테고리 매핑 (`categories.ts`)
+(Eng Review D2에서 Smaller arrangement로 확정. 날짜 처리는 wds 의존성에 이미 있는 `dayjs`를 재사용한다.)
+
+### 카테고리 매핑 (`parse.ts` 안)
 
 | 폴더 | slug | 라벨 | 이모지 |
 |---|---|---|---|
@@ -114,9 +120,9 @@ daily-news/
    ```ts
    type Day = { date: string; entries: { slug: string; title: string; highlights: string[]; markdown: string }[] };
    ```
-3. `search-index.json`: **빌드 시점에 미리 직렬화한 MiniSearch 인덱스**(`JSON.stringify(miniSearch)` → 클라이언트에서 `MiniSearch.loadJSON`). 검색 단위는 "항목"(`##`/`###` 섹션 하나)이다. 색인 필드는 **헤딩 + 요약/핵심 문장(항목당 최대 약 300자)만** 넣고 마크다운 전문은 넣지 않는다. 저장 필드는 `id, date, slug, heading, snippet`이다.
+3. `search.json`: 검색 코퍼스(Eng Review D3에서 MiniSearch 대신 **부분문자열 스캔**으로 확정). 단위는 "항목"(`##`/`###` 섹션 하나)이고, `text`는 헤딩 + 본문 최대 200자다. 클라이언트는 검색어를 공백으로 나눠 **모두 포함(AND)**하는 섹션을 `String.includes`로 찾아 최신순 최대 100개를 보여준다. 입력 후 200ms 디바운스. 한국어 조사가 붙은 단어("삼성전자는")나 단어 중간("전자")도 찾을 수 있다.
    ```ts
-   type SearchDoc = { id: string; date: string; slug: string; heading: string; snippet: string };
+   type SearchDoc = { id: string; date: string; slug: string; heading: string; text: string };
    ```
    검색 탭에 처음 들어갈 때 lazy-load한다. 예상 크기는 1년치 gzip 기준 약 1MB 이하이다. 빌드할 때 크기를 출력하고, 비압축 3MB를 넘으면 반기 단위 파일로 나누고 최근 파일부터 로드한다.
 4. `aggregates.json`: 모아보기용
@@ -132,16 +138,16 @@ daily-news/
 
 - **제목:** 첫 `# ` 줄.
 - **핵심:** `^##\s*🔎` 헤딩 아래부터 다음 `---` 또는 `##`까지의 불릿과 문단. 불릿이 없으면 문단을 문장 단위로 나눈다. 아무것도 없으면 첫 `##` 섹션의 첫 문장으로 대체한다.
-- **액션:** `✅` 가 포함된 불릿(`- ✅ **액션:** …`, `## ✅ 액션 포인트` 아래 불릿). id는 `date+slug+hash(text)`로 만든다(체크 상태를 localStorage에 저장할 키).
-- **종목:** `05_투자`의 **`## ⭐ 관심 종목` 헤딩 아래 블록에서만** `- **이름(코드):**`, `- **이름(TICKER):**`, `- **이름:**` 패턴을 읽는다. 다른 섹션의 `- **수출:**`, `- **HBM:**` 같은 라벨 불릿은 제외한다. 키는 코드/티커다. 먼저 전체 파일을 한 번 훑어 `이름 → 코드` 매핑을 만들고, 코드가 없는 언급도 이름으로 같은 키에 합친다. 매핑이 없으면 이름을 키로 쓴다. 다른 카테고리에서 같은 이름이 나오면 mention으로 추가하는 건 v1.1로 미룬다(오탐 위험).
-- **일정:** `05_투자`의 `🗓️` 헤딩 아래 표에서 `| 날짜 | 이벤트 |`를 읽는다.
+- **액션:** `✅` 가 포함된 **불릿 줄만**(헤딩 줄 `## ✅ …` 자체는 제외)(`- ✅ **액션:** …`, `## ✅ 액션 포인트` 아래 불릿). id는 `date+slug+hash(text)`로 만든다(체크 상태를 localStorage에 저장할 키).
+- **종목:** `05_투자`의 **`^##\s*⭐` 로 시작하는 헤딩 아래 블록에서만**(실측 헤딩 변형 10가지: `관심 종목`, `관심 종목 촉매`, `관심 종목 (촉매 + 체크포인트)` 등) `- **이름(코드):**`, `- **이름(TICKER):**`, `- **이름:**` 패턴을 읽는다. 다른 섹션의 `- **수출:**`, `- **HBM:**` 같은 라벨 불릿은 제외한다. 키는 코드/티커다. 먼저 전체 파일을 한 번 훑어 `이름 → 코드` 매핑을 만들고, 코드가 없는 언급도 이름으로 같은 키에 합친다. 매핑이 없으면 이름을 키로 쓴다. 다른 카테고리에서 같은 이름이 나오면 mention으로 추가하는 건 v1.1로 미룬다(오탐 위험).
+- **일정:** `05_투자`의 `^##\s*🗓` 로 시작하는 헤딩 아래 표에서 `| 날짜 | 이벤트 |`를 읽는다.
   - 연도 결정: sourceDate의 연도를 붙이되, (sourceDate 월 − 이벤트 월)이 6 이상일 때만 다음 해로 본다. 예: 12월 파일의 `1/15` → 다음 해, 10/1 파일의 `9/30` → 같은 해.
   - 표기 정규화: `10/8(목) 새벽 3시` → 10/8. `10/27~28` → 시작일 10/27. `10월 말`처럼 파싱되지 않는 표기는 `label`에 원문을 남기고 "날짜 미정" 그룹에 넣는다.
   - 중복 처리: 문구가 날마다 바뀌어 문자열로 중복을 제거할 수 없다. 그래서 **다가오는 일정(오늘 이후)은 캘린더 표가 있는 가장 최근 파일 1개의 행만** 쓴다. 지난 일정은 이벤트 날짜별로 그 날짜 이전 가장 최근 파일의 행만 남긴다.
 - **날짜/요일:** 파일명 기준. 빌드 시점의 현재 시각은 쓰지 않는다.
 
 품질 가드는 두 겹이다.
-- **`build-data` 자체 리포트(CI, 비차단):** 파일마다 title·highlights 추출 여부를 검사한다. 실패 파일 목록과 search-index 크기를 `$GITHUB_STEP_SUMMARY`에 쓰고, `::warning::` 어노테이션을 남긴다. exit code는 0이다. 새 날짜의 포맷이 흔들려도 배포는 막히지 않는다. 0이 아닌 exit는 md 파일 읽기 실패 같은 진짜 오류에서만 낸다.
+- **`build-data` 자체 리포트(CI, 비차단):** 파일마다 title·highlights 추출 여부를 검사한다. 실패 파일 목록과 search.json·index.json 크기를 `$GITHUB_STEP_SUMMARY`에 쓰고, `::warning::` 어노테이션을 남긴다. exit code는 0이다. 새 날짜의 포맷이 흔들려도 배포는 막히지 않는다. 0이 아닌 exit는 md 파일 읽기 실패 같은 진짜 오류에서만 낸다.
 - **`vitest`(로컬 전용, `pnpm test`):** 파서 단위 테스트와 실제 저장소 파일 스냅샷을 돌린다. 배포 워크플로에서는 실행하지 않는다. 기대치: 모든 파일에 title이 있고, `06_말씀`을 제외한 파일의 95% 이상에 highlights가 있다.
 - `✅ 액션`은 일부 카테고리·일부 날짜에만 있다(예: 10/6 기준 02, 04에만 있음). 모아보기의 액션 탭이 듬성듬성한 건 정상이다.
 
@@ -165,7 +171,7 @@ daily-news/
 
 - `vite-plugin-pwa` (`registerType: 'prompt'`).
 - manifest: `name: "데일리 브리핑"`, `short_name: "브리핑"`, `display: "standalone"`, `start_url`·`scope` = Pages base(`/daily-news/`), theme/background 색은 Montage 토큰, 아이콘 192/512 + maskable, iOS용 `apple-touch-icon` 180.
-- 캐시 전략: 앱 셸은 precache. `data/index.json`과 `aggregates.json`은 **NetworkFirst + `networkTimeoutSeconds: 3`**(아침마다 새 데이터, 느리거나 오프라인이면 3초 후 캐시). `data/days/*.json`과 `search-index.json`은 **StaleWhileRevalidate**. Pretendard CDN은 CacheFirst.
+- 캐시 전략: 앱 셸은 precache. `data/index.json`과 `aggregates.json`은 **NetworkFirst + `networkTimeoutSeconds: 3`**(아침마다 새 데이터, 느리거나 오프라인이면 3초 후 캐시)이고, 앱은 이 둘을 `fetch(url, { cache: 'no-cache' })`로 요청한다. GitHub Pages가 `cache-control: max-age=600`을 주므로 ETag 재검증 없이는 최대 10분 지연된다(Eng Review D4). `data/days/*.json`과 `search*.json`은 **StaleWhileRevalidate**. `data/`는 서비스 워커 precache 대상에서 제외한다(기본 globPatterns 유지). Pretendard CDN은 CacheFirst.
 - **새 데이터 감지와 앱 업데이트는 분리한다.** 데이터만 바뀐 배포는 서비스 워커를 바꾸지 않기 때문이다.
   - 새 브리핑: 앱이 포그라운드로 돌아올 때(`visibilitychange`) `index.json`을 다시 받아 `generatedAt`/`latestDate`가 바뀌었으면 데이터를 다시 불러오고 토스트 "새 브리핑이 도착했어요"를 띄운다.
   - 앱 코드 업데이트: vite-plugin-pwa의 `onNeedRefresh`일 때만 "앱이 업데이트됐어요 · 새로고침" 토스트를 띄운다.
@@ -224,12 +230,12 @@ daily-news/
 
 ## Next Steps
 
-0. **스파이크(1시간):** `read:packages` PAT를 발급하고 로컬에서 `@wanteddev/wds`를 설치해 본다. 그다음 Actions에서 `GITHUB_TOKEN`과 PAT 두 가지로 설치를 시도해 어느 쪽으로 갈지 확정한다. 같은 날 Settings → Pages → Source를 "GitHub Actions"로 바꾼다. 스케줄러 작업 사본 위치와 `git add` 방식도 확인한다.
+0. **스파이크(1시간):** 로컬은 `gh auth refresh -s read:packages` 후 `NODE_AUTH_TOKEN=$(gh auth token)`으로 `@wanteddev/wds`를 설치해 본다(현재 gh 토큰엔 read:packages 없음, 확인됨). CI용 `read:packages` PAT를 발급한다. 그다음 Actions에서 `GITHUB_TOKEN`과 PAT 두 가지로 설치를 시도해 어느 쪽으로 갈지 확정한다. 같은 날 Settings → Pages → Source를 "GitHub Actions"로 바꾼다. 스케줄러 작업 사본 위치와 `git add` 방식도 확인한다.
 1. `README.md` 작성 (위 구성).
-2. `app/scripts/build-data.ts` + `categories.ts` + vitest 픽스처 테스트. 100일 전체 파싱 리포트를 확인한다.
+2. `app/scripts/parse.ts` + `build-data.ts` + `parse.test.ts`(vitest, 실제 파일 픽스처). 100일 전체 파싱 리포트를 확인한다.
 3. Vite + React + Montage 셸: ThemeProvider, Pretendard, 하단 탭, HashRouter.
 4. 오늘 탭 → 브리핑 상세(마크다운 렌더, 날짜 이동).
-5. 지난 브리핑(달력) → 검색(MiniSearch, 사전 직렬화 인덱스) → 모아보기(액션/종목).
+5. 지난 브리핑(달력) → 검색(부분문자열 스캔) → 모아보기(액션/종목).
 6. 설정: 설치 안내(iOS/Android 감지, `beforeinstallprompt`), 테마, 데이터 정보.
 7. PWA(manifest, 아이콘, SW 캐시 전략, 업데이트 토스트) → deploy.yml → 실기기 2종 확인.
 8. 스케줄러 프롬프트에 `git pull --rebase` 추가, `git add`를 카테고리 폴더로 한정.
@@ -243,3 +249,295 @@ Montage 작업에는 공식 `@wanteddev/wds-mcp` MCP 서버와 montage-web의 Cl
 - 선택지를 그대로 고르지 않고 "아이폰 또는 안드로이드 둘 다 되게 할건데 그 설치 매뉴얼도 사용자가 잘 보게 해줘"라고 범위를 직접 다시 그었다. 기술 선택보다 실제로 쓰는 순간을 먼저 생각했다.
 - "이건 뭐가 좋은지 모르겠네"라고 모르는 것을 그대로 말하고 기준("깔끔하게 보고, 이전 것도 보고, 주제마다 모아보고")을 다시 꺼냈다. 그 기준 덕분에 결정이 바로 났다.
 - 2차 의견을 굳이 받겠다고 골랐고, 그 결과 사이드카 순서가 바뀌었다. 추천을 그대로 따르지 않고 검증을 택했다.
+
+---
+
+# Eng Review (/plan-eng-review, 2026-10-06)
+
+Target: `docs/design-mobile-pwa.md` (이 문서). Reviewer: Claude (plan-eng-review).
+
+## Scope record
+
+feature answers: 기능 축소 제안 없음(v1/v1.1/v2 범위 유지); structure: A) Smaller arrangement (D2, 사용자 답변 "너의 추천대로 진행해줘"); accepted scope: 기능 목록·계약은 설계 그대로, 파일 구조만 아래로 변경; pending remedies: S1
+
+Accepted file structure:
+```
+app/
+├─ scripts/parse.ts        # 순수 함수: md 문자열 → Entry (카테고리 매핑 포함)
+├─ scripts/build-data.ts   # glob·읽기, JSON 쓰기, $GITHUB_STEP_SUMMARY 리포트
+├─ scripts/parse.test.ts   # vitest, 실제 524개 파일 대상
+└─ src/
+   ├─ main.tsx, App.tsx    # ThemeProvider, HashRouter, 하단 탭
+   ├─ data.ts              # fetch·캐시, KST 오늘 날짜, 새 데이터 감지
+   ├─ markdown.tsx         # react-markdown → Montage 타이포 매핑
+   └─ routes/{Today,Day,Calendar,Collect,Search,Settings}.tsx
+```
+
+## Decision ledger
+
+### S2: 로컬 개발 토큰 (사실 정정, 질문 없음)
+Finding: S2, P3, 9/10, 본문 Next Steps 0번, reviewer Claude
+Runtime evidence: `gh auth status` → scopes `gist, read:org, repo, workflow`; 토큰으로 `npm.pkg.github.com/@wanteddev%2fwds` 요청 시 `"The token provided does not match expected scopes."`, 익명 요청 401.
+Correction: 로컬은 `gh auth refresh -s read:packages` 후 `NODE_AUTH_TOKEN=$(gh auth token)`으로 설치. CI는 기존 계획(PAT 시크릿) 유지. 동작 변화 없음.
+
+### S3: 날짜 처리 라이브러리 (재사용, 질문 없음)
+Finding: S3, P3, 9/10, `@wanteddev/wds` package.json dependencies에 `"dayjs": "^1.11.20"`, `"next-themes": "^0.4.6"` 포함, reviewer Claude
+Correction: KST 날짜 계산은 `dayjs` + `utc`/`timezone` 플러그인 사용, 새 날짜 라이브러리 추가 안 함. 동작 변화 없음.
+
+### S1: 한국어 검색 방식
+Finding: S1, P2, 8/10, 본문 "`search-index.json`: **빌드 시점에 미리 직렬화한 MiniSearch 인덱스**", reviewer Claude
+Plan baseline: MiniSearch 사전 직렬화 인덱스, 헤딩+요약 최대 약 300자, 1년 gzip 약 1MB 이하 예상 (원 제안, 승인된 설계)
+Runtime evidence: 섹션(##/###) 3,042개 / 파일 524개 (2026-10-06 실측). MiniSearch 기본 토크나이저는 공백·문장부호 기준 분리(라이브러리 기본 동작, 미검증 프로브 없음). 한국어 조사 결합 단어("삼성전자는")의 부분일치 동작은 미검증.
+Comparison grid:
+| 선택 | 현재 | A 부분문자열 스캔 | B MiniSearch prefix | C MiniSearch 2-gram |
+|---|---|---|---|---|
+| 검색 엔진 | MiniSearch | 없음, `String.includes` | MiniSearch prefix+fuzzy | MiniSearch + 2-gram 토크나이저 |
+| "전자"로 "삼성전자" 찾기 | 불가 | 가능 | 불가 | 가능 |
+| "삼성전자"로 "삼성전자는" 찾기 | 불확실 | 가능 | 가능 | 가능 |
+| 검색 파일 | search-index.json | search.json(섹션별 헤딩+본문 최대 200자) | search-index.json | search-index.json(수배 커짐) |
+| 반기 분할·지연 로드 | 승인됨 | 유지 | 유지 | 유지 |
+| 의존성 | minisearch | 없음 | minisearch | minisearch |
+Question D3:
+D3 — 한국어 검색을 어떤 방식으로 할까요?
+Project/branch/task: daily-news(main), 모바일 PWA 설계 엔지니어링 리뷰, Scope Challenge S1.
+ELI10: 설계엔 MiniSearch라는 검색 라이브러리를 쓰기로 돼 있는데, 이 라이브러리는 띄어쓰기로 단어를 나눠요. 한국어는 "삼성전자는"처럼 조사가 붙어서 "전자"로 검색하면 못 찾습니다. 데이터가 1년에 수 MB 수준이라, 라이브러리 없이 글자 그대로 포함 여부를 훑는 방식이 더 정확하고 단순해요.
+Stakes if we pick wrong: 종목명·키워드로 검색했는데 분명히 있는 내용이 안 나와서 검색 기능을 믿을 수 없게 됩니다.
+Recommendation: A 부분문자열 스캔 — 한국어 부분일치가 정확하고 의존성·인덱스가 없어 가장 단순.
+Completeness: A=9/10, B=6/10, C=8/10
+Pros / cons:
+A) 부분문자열 스캔 (recommended) (human: ~2시간 / CC: ~15분)
+  ✅ "전자", "하이닉스", "HBM4"처럼 어떤 부분 글자로 검색해도 정확히 찾아냄
+  ✅ 라이브러리·인덱스 빌드가 없어 코드와 빌드 단계가 가장 단순하고 유지보수할 게 없음
+  ❌ 수십 MB로 커지면 매 검색이 느려질 수 있어 반기 분할과 결과 개수 제한이 필요
+B) MiniSearch prefix 검색 (human: ~3시간 / CC: ~20분)
+  ✅ 단어 앞부분 일치("삼성전자"→"삼성전자는")와 오타 허용, 관련도 순 정렬 제공
+  ❌ 단어 중간·뒷부분("전자")은 못 찾아 한국어 검색 결과가 자주 빠짐
+C) MiniSearch + 2-gram 토크나이저 (human: ~1일 / CC: ~40분)
+  ✅ 두 글자 단위로 쪼개 부분일치와 관련도 정렬을 함께 제공
+  ❌ 인덱스가 원문보다 수배 커지고 토크나이저 튜닝·테스트 부담이 생김
+Net: 단순·정확한 스캔 vs 관련도 정렬이 있는 인덱스.
+Header: 한국어 검색
+Options:
+A) 부분문자열 스캔
+(recommended) search.json에 섹션별 {id,date,slug,heading,text(헤딩+본문 최대 200자)}를 담고, 클라이언트에서 검색어를 공백으로 나눠 모두 포함(AND)하는 섹션을 최신순으로 최대 100개 표시. MiniSearch 제거, 반기 분할·지연 로드 유지. 테스트: 조사 붙은 단어 부분일치, 다중 키워드 AND, 결과 0건.
+B) MiniSearch prefix 검색
+MiniSearch 사전 직렬화 인덱스 유지, prefix·fuzzy 옵션 켜기. 단어 앞부분 일치만 지원. 반기 분할·지연 로드 유지.
+C) MiniSearch 2-gram
+MiniSearch에 한국어 2-gram 토크나이저 적용. 부분일치+관련도 정렬, 인덱스 수배 증가. 반기 분할·지연 로드 유지.
+
+State: approved
+Actual answer: A) 부분문자열 스캔 (D3 답변)
+Accepted scope: search.json에 섹션별 {id,date,slug,heading,text(헤딩+본문 최대 200자)}; 클라이언트에서 공백 분리 AND `includes` 검색, 최신순 최대 100개; MiniSearch 제거; 반기 분할·지연 로드 유지; 테스트: 조사 붙은 단어 부분일치, 다중 키워드 AND, 결과 0건.
+History: none
+
+### A1: 새 데이터 확인 시 HTTP 캐시
+Finding: A1, P2, 9/10, 본문 "앱이 포그라운드로 돌아올 때(`visibilitychange`) `index.json`을 다시 받아", reviewer Claude (Architecture)
+Plan baseline: `index.json`·`aggregates.json`은 NetworkFirst + `networkTimeoutSeconds: 3`, 포그라운드 복귀 시 재요청 (승인된 설계). fetch 캐시 모드는 미지정.
+Runtime evidence: `curl -sI https://hgko1207.github.io/` → `cache-control: max-age=600`, `etag: "69df85d2-ba16"`. 기본 fetch는 이 10분 동안 브라우저 HTTP 캐시 사본을 반환할 수 있음.
+Comparison grid:
+| 선택 | 현재 | A 재검증 요청 | B 그대로 |
+|---|---|---|---|
+| index.json·aggregates.json fetch | 기본(HTTP 캐시 최대 10분) | `cache: 'no-cache'`(ETag로 서버 재확인, 변경 없으면 304) | 기본 |
+| days/*.json·search.json | SWR | 변경 없음(SWR) | 변경 없음 |
+| NetworkFirst 3초 타임아웃·오프라인 폴백 | 승인됨 | 유지 | 유지 |
+| 새 브리핑 반영 지연 | 빌드 + 최대 10분 | 빌드 시간만 | 빌드 + 최대 10분 |
+Question D4:
+D4 — 새 브리핑 확인할 때 브라우저 캐시를 건너뛸까요?
+Project/branch/task: daily-news(main), 모바일 PWA 설계 엔지니어링 리뷰, Architecture A1.
+ELI10: GitHub Pages는 파일을 10분 동안 캐시해도 된다고 알려줘요. 그래서 앱을 다시 열어 새 브리핑을 확인해도, 폰이 10분 전 목록을 그대로 보여줄 수 있어요. 목록 파일(index.json)만 "바뀌었는지 서버에 물어보고 받기"로 바꾸면 바로 반영되고, 안 바뀌었으면 아주 작은 응답만 오가요.
+Stakes if we pick wrong: 아침에 앱을 열었는데 오늘 브리핑이 커밋됐는데도 최대 10분 동안 어제 것만 보입니다.
+Recommendation: A 재검증 요청 — 한 줄 변경으로 성공 기준(15분 내 반영)을 확실히 지킴.
+Completeness: A=10/10, B=7/10
+Pros / cons:
+A) 재검증 요청 (recommended) (human: ~30분 / CC: ~5분)
+  ✅ 커밋·배포가 끝나는 즉시 앱에서 새 브리핑이 보여 아침 확인이 확실해짐
+  ✅ ETag 덕분에 변경 없을 땐 304 빈 응답이라 데이터 사용량이 거의 늘지 않음
+  ❌ 앱을 열 때마다 서버 왕복이 한 번 생겨 아주 느린 망에서는 3초 타임아웃까지 기다릴 수 있음
+B) 그대로 두기
+  ✅ 코드 변경 없고 서버 요청 수가 가장 적음
+  ❌ 배포 직후 최대 10분간 예전 목록이 보여 "새 브리핑 도착" 토스트도 늦게 뜸
+Net: 즉시 반영 vs 요청 1회 절약.
+Header: 캐시 재검증
+Options:
+A) 재검증 요청
+(recommended) index.json·aggregates.json을 `fetch(url, { cache: 'no-cache' })`로 요청(서버에 ETag로 재확인). days/*.json·search.json은 SWR 그대로. NetworkFirst 3초 타임아웃·오프라인 폴백 유지. 테스트: data.ts가 index.json을 no-cache로 요청하는지.
+B) 그대로 두기
+기본 fetch 유지. 배포 후 최대 10분 지연 허용. 나머지 캐시 전략 변경 없음.
+
+State: approved
+Actual answer: A) 재검증 요청 (D4 답변)
+Accepted scope: index.json·aggregates.json을 `fetch(url, { cache: 'no-cache' })`로 요청; days/*.json·search.json은 SWR 유지; NetworkFirst 3초 타임아웃·오프라인 폴백 유지; 테스트: data.ts가 index.json을 no-cache로 요청하는지.
+History: none
+
+Approval readiness: PASS — D2(structure: Smaller arrangement), S1/D3(부분문자열 스캔), A1/D4(재검증 요청). S2·S3·Q1·Q2는 동작 변화 없는 사실 정정으로 본문에 반영.
+
+## Review findings (섹션별)
+
+**Scope Challenge:** scope accepted as-is (파일 구조만 Smaller arrangement로 정리, 기능 축소 없음)
+- [P2] (8/10) S1 MiniSearch는 한국어 부분일치 불가 → D3 A 승인
+- [P3] (9/10) S2 로컬 토큰은 `gh auth refresh -s read:packages`로 충분 → 본문 정정
+- [P3] (9/10) S3 날짜는 wds 의존성의 `dayjs` 재사용 → 본문 정정
+
+**1. Architecture:**
+- [P2] (9/10) A1 GitHub Pages `max-age=600` 때문에 index.json 재요청이 최대 10분 지연 → D4 A 승인
+- 확인, 이슈 없음: react-markdown 기본값이 raw HTML과 `javascript:` URL을 막음(`rehype-raw` 추가 금지). 공개 사이트에 비밀값 없음, PAT는 CI 시크릿에만 있음.
+- Dispositions: A1 accepted (D4)
+
+**2. Code Quality:**
+- [P2] (9/10) Q1 관심 종목 헤딩이 실측 10종 변형 → `^##\s*⭐` 접두 매칭으로 본문 정정(🗓️도 동일)
+- [P3] (8/10) Q2 `✅` 540줄 중 헤딩 줄 포함 → 액션은 불릿 줄만 추출하도록 본문 정정
+- Dispositions: Q1·Q2 accepted (승인된 동작의 정밀화, 질문 불필요)
+
+**3. Tests:** 커버리지 다이어그램은 아래에 있다. 테스트 프레임워크는 설계에서 승인된 vitest(로컬). 새 정책이나 선택적 검증 깊이 제안 없음. 실기기 확인은 구현 후 `/qa`.
+
+**4. Performance:**
+- [P3] (8/10) P1 search.json은 반기당 원문 최대 약 2.8MB(섹션 3,042개/97일 실측 기반 추정) → 입력 200ms 디바운스, 결과 최대 100개(본문 반영). index.json의 핵심 문장은 97일 123KB 실측, 1년 약 460KB라 현 구조 유지, 2MB를 넘으면 재검토.
+- Dispositions: P1 accepted (승인된 검색 계약 내 구현 세부)
+
+## Diagrams
+
+데이터 파이프라인:
+```
+스케줄러 push (0*/YYYY-MM-DD.md)
+   │  paths: 0*/**, app/**, .github/workflows/**
+   ▼
+GitHub Actions (concurrency: pages, cancel-in-progress)
+   ├─ pnpm install  ── NODE_AUTH_TOKEN=WDS_PACKAGES_TOKEN ──> npm.pkg.github.com (@wanteddev/*)
+   ├─ build-data.ts ── glob 0*/*.md → parse.ts(순수) ──┬─> data/index.json
+   │                                                    ├─> data/days/YYYY-MM-DD.json
+   │                                                    ├─> data/search-YYYYH[12].json
+   │                                                    ├─> data/aggregates.json
+   │                                                    └─> $GITHUB_STEP_SUMMARY (경고, exit 0)
+   ├─ vite build (+ vite-plugin-pwa, data/ precache 제외)
+   └─ deploy-pages ──> https://hgko1207.github.io/daily-news/
+```
+
+앱 데이터 흐름:
+```
+앱 열기 / visibilitychange
+   └─ data.ts: fetch index.json {cache:'no-cache'} ── SW NetworkFirst(3s) ──┐
+        ├─ 200 새 generatedAt → 데이터 갱신 + "새 브리핑" 토스트          │ 실패/타임아웃
+        ├─ 304 / 동일 → 그대로                                           ▼
+        └─ 오프라인 → SW 캐시 사본 + "오프라인" 배지  <── 캐시도 없음 → 재시도 버튼
+   오늘 = dayjs().tz('Asia/Seoul') 날짜가 index.days에 있으면 오늘, 없으면 latestDate(실제 날짜 표기)
+```
+
+## Test coverage diagram (계획 기준, 신규 코드 전부 GAP)
+
+```
+CODE PATHS                                         USER FLOWS
+[+] scripts/parse.ts                               [+] 아침 확인
+  ├── title 추출              [GAP]                   ├── [GAP] [→E2E] 커밋→배포→새 날짜 표시
+  ├── 🔎 핵심 / 대체 규칙       [GAP]                   └── [GAP] 오늘 파일 없음 → 실제 날짜 표기
+  ├── ✅ 액션(불릿만)          [GAP]               [+] 검색
+  ├── ⭐ 종목(접두 매칭, 이름→코드) [GAP]               ├── [GAP] "전자" 부분일치
+  └── 🗓 일정(연도 롤오버, 최신 파일 우선) [GAP]       ├── [GAP] 다중 키워드 AND
+[+] scripts/build-data.ts                             └── [GAP] 0건 화면
+  ├── 전체 524개 파일 품질 임계 [GAP]               [+] 모아보기
+  └── 경고 리포트, exit 0     [GAP]                   └── [GAP] 액션 체크 유지(localStorage)
+[+] src/data.ts                                    [+] 설정
+  ├── index.json no-cache     [GAP]                   └── [GAP] iOS/Android/standalone 감지
+  ├── KST 오늘 계산           [GAP]                [+] 오류 상태
+  └── 새 데이터 감지(generatedAt) [GAP]               ├── [GAP] 오프라인 배지
+[+] src/search.ts                                     └── [GAP] fetch 실패 재시도
+  └── AND includes, 최신순 100개 [GAP]
+
+COVERAGE: 0/22 (신규 계획, 구현 시 함께 작성)  |  E2E 후보 1 (실기기 /qa로 확인)
+Legend: [GAP] 미작성 테스트  |  [→E2E] 통합 확인 필요
+```
+
+테스트 파일: `app/scripts/parse.test.ts`(파서·build 리포트, 실제 파일 + 표 기반 엣지), `app/src/data.test.ts`(no-cache, KST, 새 데이터 감지), `app/src/search.test.ts`(부분일치·AND·0건; 검색 함수는 `src/search.ts`로 분리해 화면과 독립 테스트). 상세 기대값은 [test-plan-mobile-pwa.md](test-plan-mobile-pwa.md).
+
+## Failure modes
+
+| 경로 | 현실적 실패 | 처리 | 사용자에게 보이나 |
+|---|---|---|---|
+| CI 패키지 설치 | PAT 만료 | 워크플로 실패 → GitHub 실패 메일, 이전 배포 유지 | 앱은 어제 데이터, 설정의 "마지막 업데이트"로 확인 가능 |
+| build-data | 새 포맷으로 핵심 추출 실패 | 원문 렌더 유지, STEP_SUMMARY 경고 | 카드 요약이 첫 문장 대체로 보임(원문은 정상) |
+| 스케줄러 push | 앱 작업 커밋 후 non-fast-forward | 스케줄러 프롬프트에 `git pull --rebase` | 아니오(그날 아카이브 커밋 누락 위험, Open Question 1) |
+| 앱 fetch | 오프라인/느린 망 | NetworkFirst 3초 → 캐시, 배지 | 예, 배지 |
+| 검색 파일 | 반기 파일이 수 MB | 지연 로드, 디바운스, 100개 제한 | 첫 검색 시 로딩 표시 |
+
+Critical gaps: 0. 스케줄러 non-fast-forward는 Open Question 1로 추적 중.
+
+## NOT in scope
+- 푸시 알림: premise 1에서 v1 제외.
+- 일정 탭 UI, 글자 크기, 카테고리 순서 변경, 종목 교차 언급: v1.1.
+- 사이드카 JSON·claims 채점: v2.
+- Playwright 등 E2E 자동화: 개인 도구 규모에 비해 과함, 실기기 `/qa`로 대체.
+- 스토어 배포(TWA/Capacitor): v3 검토.
+
+## What already exists
+- 데이터 원본: 카테고리 폴더 524개 md(스케줄러가 계속 생성). 그대로 재사용, 수정 없음.
+- `@wanteddev/wds`: 컴포넌트, 테마(`next-themes`), `dayjs` 포함 → 테마·날짜 라이브러리 추가 불필요.
+- `react-markdown` 기본 보안 동작(HTML·위험 URL 차단) 재사용.
+- vite-plugin-pwa 기본 precache 규칙(js/css/html) 재사용.
+- 기존 앱 코드·테스트 없음(신규).
+
+## Worktree parallelization strategy
+
+| Step | Modules touched | Depends on |
+|---|---|---|
+| 스파이크(토큰·Pages 설정) | 설정, .github/ | — |
+| 데이터 파이프라인 | app/scripts/ | — |
+| 앱 셸·화면 | app/src/ | 스파이크(wds 설치) |
+| PWA·배포 | app/vite.config.ts, .github/workflows/ | 데이터 파이프라인, 앱 셸 |
+
+Lane A: 데이터 파이프라인(app/scripts/, 독립). Lane B: 스파이크 → 앱 셸·화면(app/src/). A와 B를 병렬로 시작하고, 둘 다 끝나면 PWA·배포. 충돌 지점: `app/package.json`(두 lane이 모두 의존성 추가) → 한쪽이 먼저 만들고 다른 쪽은 rebase.
+
+## Implementation Tasks
+Synthesized from this review's findings. Each task derives from a specific finding above. Run with Claude Code or Codex; checkbox as you ship.
+
+- [ ] **T1 (P1, human: ~1h / CC: ~10min)** — 설정 — read:packages 토큰 확보와 Pages 소스 설정
+  - Surfaced by: Scope Challenge S2 + 설계 Next Steps 0
+  - Files: (GitHub 설정), `app/.npmrc`
+  - Verify: 로컬 `pnpm i @wanteddev/wds` 성공, Actions에서 설치 성공
+- [ ] **T2 (P1, human: ~1d / CC: ~30min)** — parse.ts — 접두 매칭 헤딩, 불릿 전용 액션, 연도 롤오버를 포함한 순수 파서
+  - Surfaced by: Code Quality Q1, Q2
+  - Files: `app/scripts/parse.ts`, `app/scripts/parse.test.ts`
+  - Verify: `pnpm test` (실제 524개 파일 + 엣지 표)
+- [ ] **T3 (P1, human: ~4h / CC: ~15min)** — search — 부분문자열 AND 검색, 반기 search.json, 디바운스·100개 제한
+  - Surfaced by: Scope Challenge S1 (D3), Performance P1
+  - Files: `app/scripts/build-data.ts`, `app/src/search.ts`, `app/src/search.test.ts`, `app/src/routes/Search.tsx`
+  - Verify: "전자"→"삼성전자는" 매칭, AND, 0건 테스트
+- [ ] **T4 (P1, human: ~1h / CC: ~5min)** — data.ts — index.json·aggregates.json no-cache 요청
+  - Surfaced by: Architecture A1 (D4)
+  - Files: `app/src/data.ts`, `app/src/data.test.ts`
+  - Verify: fetch 옵션 테스트, 배포 직후 실기기에서 새 날짜 즉시 표시
+- [ ] **T5 (P2, human: ~30min / CC: ~5min)** — PWA 설정 — data/ precache 제외 유지, rehype-raw 미사용
+  - Surfaced by: Architecture 확인 항목
+  - Files: `app/vite.config.ts`, `app/src/markdown.tsx`
+  - Verify: 빌드 후 서비스 워커 precache 목록에 data/ 없음
+
+## Unresolved decisions
+없음. Open Questions 1~4는 office-hours에서 넘어온 사실 확인 항목으로, T1 스파이크에서 확인한다.
+
+## Completion summary
+- Step 0: Scope Challenge — scope accepted as-is (Smaller arrangement, 기능 축소 없음)
+- Architecture Review: 1 issues found
+- Code Quality Review: 2 issues found
+- Test Review: diagram produced, 22 gaps identified (신규 코드, 구현과 함께 작성)
+- Performance Review: 1 issues found
+- NOT in scope: written
+- What already exists: written
+- TODOS.md updates: 0 items proposed to user (v1.1/v2는 설계 문서에서 관리)
+- Failure modes: 0 critical gaps flagged
+- Unresolved decisions: 0 in this review
+- Outside voice: codex, unavailable (Codex 미설치, 네이티브 대체에 필요한 TaskOutput 도구 없음)
+- Parallelization: 2 lanes, 2 parallel / 1 sequential
+- Lake Score: 1/2 = answers picking a 10/10 option / answers scored for Completeness (D4 A=10, D3 A=9)
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | — |
+| Outside Review | codex via `/plan-eng-review` | Independent 2nd opinion | 1 | unavailable | Codex 미설치, 네이티브 대체 불가 |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | ISSUES OPEN | 26 issues, 0 critical gaps |
+| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | — |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
+
+- **OUTSIDE COVERAGE:** codex, plan-review, unavailable (CLI 미설치). 이번 리뷰에 외부 모델 검증 없음.
+- **VERDICT:** CLEAR된 리뷰 없음. Eng Review는 모든 결정이 승인됐지만 신규 코드 테스트 GAP 22개가 구현과 함께 해결돼야 하므로 ISSUES OPEN. eng review required (구현 후 `/review`로 diff 리뷰).
+
+NO UNRESOLVED DECISIONS

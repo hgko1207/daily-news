@@ -88,7 +88,8 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 
 | 문서 | 내용 |
 |---|---|
-| [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md) | 모바일 PWA 설계 (데이터 파이프라인, 화면, 배포, 로드맵) |
+| [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md) | 모바일 PWA 설계 (데이터 파이프라인, 화면, 배포, 로드맵) + 엔지니어링 리뷰 결과 |
+| [docs/test-plan-mobile-pwa.md](./docs/test-plan-mobile-pwa.md) | 모바일 PWA 테스트 계획 (화면별 확인 항목, 엣지 케이스) |
 
 ## 고지
 
