@@ -1,0 +1,60 @@
+name: Deploy briefing app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '0*/**'
+      - 'app/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  packages: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        env:
+          # @wanteddev/* 는 GitHub Packages에만 있다. read:packages PAT(WDS_PACKAGES_TOKEN)가 없으면 GITHUB_TOKEN을 시도한다.
+          NODE_AUTH_TOKEN: ${{ secrets.WDS_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Build data
+        run: pnpm build:data
+      - name: Build app
+        run: pnpm build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
