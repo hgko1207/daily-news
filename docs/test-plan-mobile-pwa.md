@@ -47,3 +47,14 @@ Repo: hgko1207/daily-news
 
 ## Pending Decisions
 - none
+
+## Design Review 추가 항목 (2026-10-07)
+- 헤드라인 선정: 국내·경제 핵심 첫 문장, 없으면 글로벌 → 투자 → 개발자 (D15)
+  Value: protects=헤드라인 대체 순서; fails_when=국내·경제 없는 날 빈 헤드라인; why_new=신규 규칙; seam=none
+- 10:30 전후 안내 문구 전환, 오늘 파일 도착 후 토스트 (D6) on 오늘
+- 상세 표 가로 스크롤 중 카테고리 전환 안 됨, `##` 3개 미만 문서에 섹션 칩 없음 (D8, D9) on 상세
+- 헤딩 앞 이모지 제거, 본문 ✅·📄 유지 (D10) on 상세
+  Value: protects=헤딩 앞자리 이모지만 제거; fails_when=본문 이모지까지 제거되거나 헤딩 이모지 남음; why_new=신규 렌더 규칙; seam=none
+- 액션 14일 지난 미완료 접힘, 종목 최근 언급순 (D17, D18) on 모아보기
+- iOS 카카오톡 인앱·Chrome에서 "Safari로 열기" 안내 + 주소 복사 (D7) on 설정
+- 다크 모드 표·인용 대비, safe-area, 포커스 링 색 (D14) on 전체

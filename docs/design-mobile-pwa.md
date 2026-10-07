@@ -91,14 +91,16 @@ daily-news/
 
 ### 카테고리 매핑 (`parse.ts` 안)
 
-| 폴더 | slug | 라벨 | 이모지 |
-|---|---|---|---|
-| 01_국내경제 | economy | 국내·경제 | 🇰🇷 |
-| 02_글로벌기술 | global | 글로벌 기술 | 🌐 |
-| 03_개발자 | dev | 개발자 | 👨‍💻 |
-| 04_교양생활 | life | 교양·생활 | 🌱 |
-| 05_투자 | invest | 투자 | 📈 |
-| 06_말씀 | word | 오늘의 말씀 | 📖 |
+| 폴더 | slug | 라벨 |
+|---|---|---|
+| 01_국내경제 | economy | 국내·경제 |
+| 02_글로벌기술 | global | 글로벌 기술 |
+| 03_개발자 | dev | 개발자 |
+| 04_교양생활 | life | 교양·생활 |
+| 05_투자 | invest | 투자 |
+| 06_말씀 | word | 오늘의 말씀 |
+
+(Design Review D10: 8A) 앱 화면(리스트·탭·달력)에서 카테고리는 **텍스트 라벨 + 8px 색 점**으로 구분하고 이모지는 쓰지 않는다. 마크다운 렌더 시 `#`/`##`/`###` 헤딩 **앞자리 이모지만** 제거하고, 본문 안의 `✅`·`📄` 같은 이모지는 유지한다. 원본 md는 변경하지 않는다.
 
 글로브 패턴은 `0[0-9]_*/[0-9]{4}-[0-9]{2}-[0-9]{2}.md`이다. 매핑에 없는 새 폴더가 생기면 폴더명을 그대로 라벨로 쓰고 빌드 경고만 낸다(실패시키지 않음).
 
@@ -155,22 +157,114 @@ daily-news/
 
 | 탭 | 내용 |
 |---|---|
-| **오늘** | 상단에 날짜(KST). 그날 존재하는 카테고리만 카드로 보여준다(초기 날짜에는 투자·말씀 없음). 각 카드에 🔎 핵심 불릿 1~3개, 카드를 누르면 상세. KST 오늘 날짜 파일이 없으면(10시 이전, 스케줄러 누락) `latestDate`를 보여주고 "10/5 (일) 브리핑 · 오늘 브리핑은 아직 없어요"처럼 **실제 날짜**로 표기한다. |
-| **지난 브리핑** | 월 달력. 브리핑이 있는 날은 점으로 표시. 카테고리 필터 칩. 아래에 해당 월 날짜 리스트. |
-| **모아보기** | 세그먼트 탭 `액션` / `종목` / (`일정`은 v1.1). 액션: 날짜 역순, 체크박스(localStorage), "완료 숨기기". 종목: 목록 → 종목 타임라인(언급일 + 체크포인트 문장 + 원문 링크). 일정(v1.1): 오늘 이후 다가오는 이벤트 순, 지난 일정은 접기. `events`는 v1에서도 `aggregates.json`에 미리 생성해 두고 UI만 v1.1에 붙인다. |
+| **오늘** | (Design Review D3: 1A) 상단에 날짜(KST). 맨 위 **오늘의 헤드라인** 1개(큰 타이포), 그 아래 그날 존재하는 카테고리만 **섹션 헤더 + 핵심 1문장(2줄 말줄임) 리스트**로 보여준다(초기 날짜에는 투자·말씀 없음). 카드 없음, 행 전체가 터치 영역이며 누르면 상세. KST 오늘 날짜 파일이 없으면 (D6: 4A) `latestDate` 브리핑을 **정상 레이아웃 그대로** 보여주고, 날짜 줄은 실제 날짜("10월 5일 일요일")로 표기한다. 그 아래 한 줄 안내: KST 10:30 전이면 "오늘 브리핑은 10시쯤 도착해요", 10:30 이후에도 없으면 "오늘 브리핑이 아직 없어요 · 마지막 10/5". 도착 후 앱 복귀 시 "새 브리핑이 도착했어요" 토스트와 함께 오늘로 전환. |
+| **지난 브리핑** | (D5: 3A) Montage `date-calendar` 월 달력, 브리핑 있는 날은 점. 날짜를 누르면 달력 아래에 그날 **헤드라인 + 카테고리 한 줄 미리보기**, 행을 누르면 상세. 기본 선택은 최신 날짜. 카테고리 칩은 **달력 점 필터** 의미로만 쓴다(그 카테고리가 있는 날만 점 표시). 별도 날짜 리스트 없음. |
+| **모아보기** | 세그먼트 탭 `액션` / `종목` / (`일정`은 v1.1). 액션: 날짜 역순, 체크박스(localStorage). (D18: 16A) 체크는 **"했음(완료)"**을 뜻한다. 기본 보기는 최근 14일의 미완료 항목이고, 14일이 지난 미완료는 "지난 액션 N개" 접힌 그룹, 완료한 항목은 "완료한 항목 보기"로 따로 본다. 종목: 목록 → 종목 타임라인(언급일 + 체크포인트 문장 + 원문 링크). (D17: 15A) 목록은 **마지막 언급일 내림차순**, 행에 "종목명 · 코드"와 "최근 M/D · N회"를 표시하고, 국내·미국을 나누지 않고 한 목록으로 보여준다. 일정(v1.1): 오늘 이후 다가오는 이벤트 순, 지난 일정은 접기. `events`는 v1에서도 `aggregates.json`에 미리 생성해 두고 UI만 v1.1에 붙인다. |
 | **설정** | ① **앱 설치 방법**: 기기 자동 감지 후 해당 안내를 먼저 펼친다. iOS: Safari → 공유 버튼 → "홈 화면에 추가" 3단계 이미지/일러스트. Android: Chrome `⋮` → "앱 설치", 또는 `beforeinstallprompt`를 잡아 [앱 설치] 버튼. 이미 standalone으로 실행 중이면 "설치됨 ✓". ② 테마(시스템/라이트/다크, Montage ThemeProvider). ③ 글자 크기(보통/크게, v1.1). ④ 데이터 정보: 마지막 업데이트 `generatedAt`, 최신 브리핑 날짜, [새로고침]. ⑤ GitHub 저장소 링크, 앱 버전. |
-| 헤더 🔍 | 검색 화면. 결과는 "날짜 · 카테고리 · 항목 제목 + 하이라이트 스니펫". 카테고리/기간 필터. |
+| 헤더 🔍 | (D16: 14A) 오늘·지난 브리핑·모아보기·상세 헤더 오른쪽 끝에 돋보기 `icon-button`(설정에는 없음). 누르면 검색 화면. 결과는 "날짜 · 카테고리 · 항목 제목 + 하이라이트 스니펫". 카테고리/기간 필터. |
 
-**브리핑 상세:** 상단 카테고리 탭(가로 스크롤), 좌우 스와이프나 이전/다음 버튼으로 날짜 이동. 마크다운은 `react-markdown` + `remark-gfm`(표 필요)으로 렌더하고 요소를 Montage 타이포·테이블 컴포넌트에 매핑한다. 외부 링크는 새 탭으로 연다. 투자 카테고리는 하단의 "투자 조언 아님" 고지를 그대로 노출한다.
+**헤드라인 선정 (D15: 13A):** 국내·경제 `🔎 핵심`의 첫 문장. 없으면 글로벌 기술 → 투자 → 개발자 순. 헤드라인으로 쓴 카테고리는 아래 리스트에서 핵심 두 번째 문장(없으면 첫 `##` 항목 제목)을 보여 중복을 피한다. v2 사이드카에 `headline` 필드가 생기면 그 값을 우선한다. `build-data`가 `index.json`의 날짜별 `headline: { slug, text }`로 미리 계산한다.
 
-**첫 실행 안내:** 브라우저 탭으로 열었고(standalone 아님) 아직 닫지 않았다면, 오늘 탭 상단에 "홈 화면에 추가하면 앱처럼 쓸 수 있어요 →설정" 배너를 띄운다(닫으면 localStorage에 기록).
+**오늘 탭 레이아웃 (D3):**
+```
+┌──────────────────────────────┐
+│ 10월 6일 화요일         🔍   │  top-navigation
+│ 10:08 업데이트               │
+├──────────────────────────────┤
+│ 오늘의 헤드라인               │  1순위: 가장 큰 타이포 2~3줄
+│ 9월 수출 1,209억 달러로 사상  │
+│ 최대, 반도체 603억 달러       │
+├──────────────────────────────┤
+│ 국내·경제                  › │  2순위: 섹션 헤더 + 핵심 1문장
+│ 코스피 7,000선 공방, 코스닥…  │        (2줄 말줄임)
+│ 글로벌 기술                › │
+│ 엔비디아 시총 6조 달러 근접…  │
+│ …(존재하는 카테고리만)        │
+├──────────────────────────────┤
+│ ┃ 너희 중에 누구든지 지혜가   │  3순위 (D4: 2A): 오늘의 말씀
+│ ┃ 부족하거든 …               │  맨 아래 인용 블록, 누르면 말씀 상세
+│ ┃ — 야고보서 1:5             │  (말씀은 리스트에서 제외)
+├──────────────────────────────┤
+│ 오늘  지난 브리핑  모아보기 설정│  bottom-navigation
+└──────────────────────────────┘
+```
 
-**상태 처리:** 로딩 시 스켈레톤 카드. 오프라인이면 캐시된 데이터 + "오프라인 · 마지막 업데이트 HH:mm" 배지. 데이터 fetch 실패 시 재시도 버튼. 검색 결과가 0건이면 "다른 단어로 찾아보세요" + 최근 종목 칩.
+**브리핑 상세:** 상단 카테고리 탭(Montage `tab`, 가로 스크롤). (D8: 6A) 본문 좌우 스와이프는 **이전/다음 카테고리**로 이동하고 상단 탭과 동기화한다. 날짜 이동은 헤더의 `‹ M/D ›` 버튼으로만 한다. 표는 가로 스크롤 컨테이너에 넣고 첫 열을 고정하며, 표 안에서는 페이지 스와이프를 막는다. (D9: 7A) `##` 헤딩이 3개 이상인 문서에는 카테고리 탭 아래에 **섹션 바로가기 칩** 한 줄(Montage `chip`)을 둔다. 라벨은 헤딩에서 이모지와 괄호를 뺀 앞 6자, 누르면 해당 섹션으로 스크롤한다. 마크다운은 `react-markdown` + `remark-gfm`(표 필요)으로 렌더하고 요소를 Montage 타이포·테이블 컴포넌트에 매핑한다. 외부 링크는 새 탭으로 연다. 투자 카테고리는 하단의 "투자 조언 아님" 고지를 그대로 노출한다.
+
+**Montage 매핑 (D12: 10A):**
+
+| 화면 요소 | Montage 컴포넌트 |
+|---|---|
+| 하단 탭(오늘·지난 브리핑·모아보기·설정) | `bottom-navigation` |
+| 헤더(날짜, ‹ › , 검색 아이콘) | `top-navigation`, `icon-button` |
+| 상세 카테고리 탭 | `tab` |
+| 오늘 리스트 / 모아보기 리스트 | `section-header` + `list` |
+| 지난 브리핑 달력 | `date-calendar` |
+| 검색 입력 | `search-field` |
+| 모아보기 액션·종목 전환, 설정 테마 선택 | `segmented-control` |
+| 액션 체크 | `checkbox` |
+| 섹션 바로가기·카테고리 필터·최근 종목 | `chip` |
+| 로딩 | `skeleton` |
+| 빈 상태·오류 | `fallback-view` |
+| 새 브리핑·앱 업데이트 알림 | `toast` |
+| 설치 안내 한 줄 | `section-message` |
+| 본문 표 | `table` (가로 스크롤 래퍼) |
+
+색 규칙:
+- 강조색은 `primary.normal` **하나만** 쓴다(선택된 탭, 링크, 주요 버튼).
+- 텍스트는 `label.normal`(본문), `label.alternative`(보조), `label.assistive`(메타 정보·시각).
+- 카테고리 색 점은 `accent.foreground.*`: 국내·경제 `lightBlue`, 글로벌 기술 `violet`, 개발자 `cyan`, 교양·생활 `green`, 투자 `redOrange`, 말씀은 색 점 없음(인용 블록으로 구분).
+- 그림자는 쓰지 않는다. 영역 구분은 `line.normal.*` 구분선과 여백으로 한다.
+
+타이포 (D13: 11A, Montage `typography` 변형):
+- 오늘의 헤드라인 `title2`, 문서 제목 `heading1`, `##` 헤딩 `heading2`, `###` 헤딩 `headline1`
+- 본문 `body1-reading`, 보조 문단·리스트 요약 `body2-reading`, 날짜·시각·출처 `caption1`
+- 본문 줄 폭은 최대 680px, 넓은 화면에서는 가운데 정렬. 헤딩 위 여백이 아래 여백보다 크게.
+- 글꼴은 Montage 기본 Pretendard(설정된 CDN 로드). 시스템 기본 글꼴로 대체하지 않는다.
+
+접근성·반응형 (D14: 12A):
+- 터치 영역 최소 44×44px. 리스트 행은 행 전체가 터치 영역.
+- 본문 대비 4.5:1 이상(Montage `label.*` 토큰). 색 점에는 항상 텍스트 라벨을 함께 쓰고, 색 점은 `aria-hidden`.
+- 다크 모드: Montage dark 테마. 표·인용·구분선까지 시맨틱 토큰만 쓰고 하드코딩 색 금지. 기본값은 "시스템".
+- 스크린 리더: `header` / `main` / `nav` 랜드마크, 마크다운 헤딩 순서 유지(앱 제목 h1, 문서 제목은 h1 대신 h2부터 시작하도록 한 단계 내림).
+- 모션: Montage 기본 전환만. `prefers-reduced-motion: reduce`면 스와이프 전환과 토스트 애니메이션을 끈다.
+- 브라우저 기본 요소: 포커스 링 `primary.normal`, 텍스트 선택색 `primary` 저투명, 스크롤바 `line.normal` 톤으로 테마 적용.
+- 반응형: 599px 이하는 한 단. 600px 이상은 본문 680px 가운데 정렬, 하단 탭 유지(사이드바로 바꾸지 않음).
+- iOS 노치·홈 인디케이터: `env(safe-area-inset-*)` 여백을 헤더와 하단 탭에 적용, manifest `display: standalone` 기준으로 확인.
+
+**아침 사용 여정 (Design Review Pass 3):**
+```
+STEP | 사용자 행동                     | 느낌           | 받쳐주는 설계
+-----|--------------------------------|----------------|------------------------------
+1    | 8시 출근길, 홈 화면 아이콘 탭   | 빨리 훑고 싶다  | 어제 브리핑 정상 화면 + "10시쯤 도착" (D6)
+2    | 헤드라인 + 카테고리 한 줄 훑기  | 3초 안에 파악  | 헤드라인 1개 + 한 줄 리스트 (D3)
+3    | 투자 줄 탭 → 상세 읽기          | 집중           | 본문 타이포 (Pass 5)
+4    | 스와이프로 다음 카테고리        | 흐름 유지      | 스와이프=카테고리 (D8)
+5    | 뒤로 → 오늘 탭 같은 위치        | 길을 잃지 않음  | 스크롤 복원 (D7)
+6    | 10시 이후 다시 열기             | "왔구나"       | 새 브리핑 토스트 (D6, D7)
+7    | 맨 아래 말씀으로 마무리         | 차분함         | 인용 블록 (D4)
+8    | 주말에 종목 타임라인 돌아보기    | 쌓인 게 보인다  | 모아보기
+```
+
+**첫 실행 안내 (D11: 9A):** 브라우저 탭으로 열었고(standalone 아님) 아직 닫지 않았다면, 오늘 탭 **헤드라인 바로 아래**에 한 줄 인라인 안내(Montage `section-message`, 아이콘 없음) "홈 화면에 추가하면 앱처럼 열려요 ›" + 닫기 버튼을 둔다. 누르면 설정의 설치 안내로 이동하고, 닫으면 localStorage에 기록해 다시 보이지 않는다.
+
+**상태 처리 (D7: 5A, Montage `skeleton` / `fallback-view` / `toast` 사용):**
+
+| 화면 | 로딩 | 빈 | 오류/오프라인 | 부분 |
+|---|---|---|---|---|
+| 오늘 | 헤드라인+리스트 모양 스켈레톤 | (해당 없음, 항상 최신 브리핑 표시) | 캐시 있음: 캐시 + "오프라인 · 마지막 업데이트 HH:mm" 배지 / 캐시 없음: fallback-view "연결되면 불러올게요" + [다시 시도] | 핵심 추출 실패 카테고리는 본문 첫 문장 / 그날 없는 카테고리는 행 생략 |
+| 상세 | 본문 스켈레톤 | 그날 없는 카테고리는 탭 숨김 | 없는 날짜 딥링크: "이 날짜엔 브리핑이 없어요" + [가장 가까운 M/D 보기] / 오프라인 미캐시: fallback-view + [다시 시도] | 뒤로가기 시 스크롤 위치 복원 |
+| 공통 | — | — | 읽는 중 새 데이터: 자동 새로고침 없이 토스트 "새 브리핑이 도착했어요"만, 누르면 오늘로 | — |
+| 지난 브리핑 | 달력 즉시 표시(index.json) | 브리핑 없는 날은 흐리게, 탭 불가 | 오프라인: 캐시 기준으로 표시 | — |
+| 검색 | 입력창은 바로 사용, 결과 영역에 "기록 불러오는 중" 진행 표시 | 0건: "다른 단어로 찾아보세요" + 최근 종목 칩 / 입력 전: 최근 종목 칩 | 오프라인 + 검색 파일 미캐시: "연결되면 검색할 수 있어요" | — |
+| 모아보기·액션 | 리스트 스켈레톤 | 0개: "아직 모인 액션이 없어요" / 전부 완료: "이번 주 액션을 다 해냈어요" + [완료한 항목 보기] | 오프라인: 캐시 기준 | — |
+| 모아보기·종목 | 리스트 스켈레톤 | 0개: "아직 모인 종목이 없어요" | 오프라인: 캐시 기준 | — |
+| 설정·설치 안내 | — | standalone: "설치됨 ✓" | iOS + Safari가 아닌 브라우저(Chrome, 카카오톡 인앱 등): "Safari로 열어야 홈 화면에 추가할 수 있어요" + [주소 복사] | — |
 
 ### PWA
 
 - `vite-plugin-pwa` (`registerType: 'prompt'`).
-- manifest: `name: "데일리 브리핑"`, `short_name: "브리핑"`, `display: "standalone"`, `start_url`·`scope` = Pages base(`/daily-news/`), theme/background 색은 Montage 토큰, 아이콘 192/512 + maskable, iOS용 `apple-touch-icon` 180.
+- manifest: `name: "데일리 브리핑"`, `short_name: "브리핑"`, `display: "standalone"`, `start_url`·`scope` = Pages base(`/daily-news/`), theme/background 색은 Montage 토큰, 아이콘 192/512 + maskable, iOS용 `apple-touch-icon` 180. 아이콘은 `primary.normal` 블루 배경 + 흰색 Pretendard Bold "브"(D19).
 - 캐시 전략: 앱 셸은 precache. `data/index.json`과 `aggregates.json`은 **NetworkFirst + `networkTimeoutSeconds: 3`**(아침마다 새 데이터, 느리거나 오프라인이면 3초 후 캐시)이고, 앱은 이 둘을 `fetch(url, { cache: 'no-cache' })`로 요청한다. GitHub Pages가 `cache-control: max-age=600`을 주므로 ETag 재검증 없이는 최대 10분 지연된다(Eng Review D4). `data/days/*.json`과 `search*.json`은 **StaleWhileRevalidate**. `data/`는 서비스 워커 precache 대상에서 제외한다(기본 globPatterns 유지). Pretendard CDN은 CacheFirst.
 - **새 데이터 감지와 앱 업데이트는 분리한다.** 데이터만 바뀐 배포는 서비스 워커를 바꾸지 않기 때문이다.
   - 새 브리핑: 앱이 포그라운드로 돌아올 때(`visibilitychange`) `index.json`을 다시 받아 `generatedAt`/`latestDate`가 바뀌었으면 데이터를 다시 불러오고 토스트 "새 브리핑이 도착했어요"를 띄운다.
@@ -210,8 +304,8 @@ daily-news/
 
 1. Claude Desktop 스케줄러가 push하는 작업 사본의 위치는? `git pull --rebase`를 추가할 수 있는가?
 2. `GITHUB_TOKEN`으로 `@wanteddev/wds`를 설치할 수 있는가? (스파이크로 확인)
-3. 앱 이름과 아이콘: "데일리 브리핑"으로 할지. 아이콘은 v1에서 단색 이니셜로 두고 디자인 스킬 단계에서 교체.
-4. `06_말씀`을 오늘 화면 맨 위(하루 시작)에 둘지 맨 아래에 둘지. 기본값은 맨 위 작은 카드로 두고 설정에서 순서 변경은 v1.1.
+3. ~~앱 이름과 아이콘~~ → 해결(Design Review D19: "데일리 브리핑" / "브리핑", `primary.normal` 블루 배경 + 흰색 Pretendard Bold "브" 아이콘, 디자인 스킬 단계에서 교체 가능).
+4. ~~`06_말씀` 위치~~ → 해결(Design Review D4: 오늘 탭 맨 아래 인용 블록).
 
 ## Success Criteria
 
@@ -527,17 +621,129 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - Parallelization: 2 lanes, 2 parallel / 1 sequential
 - Lake Score: 1/2 = answers picking a 10/10 option / answers scored for Completeness (D4 A=10, D3 A=9)
 
+
+---
+
+# Design Review (/plan-design-review, 2026-10-07)
+
+Target: `docs/design-mobile-pwa.md` (이 문서). Reviewer: Claude (plan-design-review). DESIGN.md 없음, Montage(@wanteddev/wds) 기준. 목업: gstack designer에 OpenAI 키가 없어 생성하지 못함(0장), 글 기반 리뷰.
+
+## 외부 디자인 의견
+Claude 서브에이전트 독립 리뷰 완료(in-host). Codex 미설치로 외부 모델 검증 없음. 리트머스 7개 모두 NO(수정 전), 하드 리젝션 #7(카드 더미 앱 UI) 1건. 서브에이전트가 짚은 "10시 전 아침이 기본 상태" 문제를 D6으로 반영.
+
+## 결정 기록 (각 이슈 개별 승인)
+
+| # | 이슈 | 결정 | 반영 위치 |
+|---|---|---|---|
+| D3 | 오늘 탭 구조 | 1A 헤드라인 1개 + 카테고리 한 줄 리스트, 카드 없음 | 화면 표, 오늘 탭 레이아웃 |
+| D4 | 말씀 위치 | 2A 오늘 탭 맨 아래 인용 블록 | 오늘 탭 레이아웃, Open Q4 |
+| D5 | 지난 브리핑 | 3A 달력 + 선택한 날 미리보기, 칩은 점 필터 | 화면 표 |
+| D6 | 10시 전 화면 | 4A 최신 브리핑 정상 표시 + "10시쯤 도착" 한 줄 | 화면 표 |
+| D7 | 상태표 | 5A 화면별 로딩·빈·오류·부분 상태 전체 | 상태 처리 표 |
+| D8 | 상세 제스처 | 6A 스와이프=카테고리, 날짜는 ‹ › 버튼, 표 첫 열 고정 | 브리핑 상세 |
+| D9 | 섹션 바로가기 | 7A `##` 3개 이상일 때 칩 | 브리핑 상세 |
+| D10 | 이모지 | 8A 라벨 + 색 점, 헤딩 앞 이모지만 렌더 시 제거 | 카테고리 매핑 |
+| D11 | 설치 안내 위치 | 9A 헤드라인 아래 한 줄 section-message | 첫 실행 안내 |
+| D12 | Montage 매핑 | 10A 컴포넌트 표 + 색 규칙(강조 1색, 그림자 없음) | Montage 매핑 |
+| D13 | 본문 타이포 | 11A body1-reading 등 Montage 읽기용 변형, 680px 폭 | 타이포 |
+| D14 | 접근성·반응형 | 12A 44px, 4.5:1, 다크 토큰, 랜드마크, reduced-motion, safe-area | 접근성·반응형 |
+| D15 | 헤드라인 기준 | 13A 국내·경제 첫 문장 → 글로벌 → 투자 → 개발자 | 헤드라인 선정 |
+| D16 | 검색 아이콘 | 14A 설정 제외 모든 헤더 | 화면 표 |
+| D17 | 종목 정렬 | 15A 최근 언급일 순 + 횟수 표시 | 모아보기 |
+| D18 | 액션 체크 | 16A 체크=완료, 14일 지난 미완료는 접기 | 모아보기 |
+| D19 | 앱 이름·아이콘 | 19A "데일리 브리핑" + 블루 "브" 아이콘 | PWA, Open Q3 |
+
+## 패스별 점수
+
+| Pass | 전 | 후 | 남은 것 |
+|---|---|---|---|
+| 1 정보 위계 | 4 | 8 | 모아보기·검색 화면 레이아웃 스케치는 구현 후 확인 |
+| 2 상태 | 5 | 9 | 문구 실기기 확인 |
+| 3 여정 | 4 | 9 | — |
+| 4 AI 티 | 4 | 8 | 실제 렌더에서 리트머스 재확인(/design-review) |
+| 5 디자인 시스템 | 3 | 8 | DESIGN.md 미작성(구현 후 /design-consultation) |
+| 6 반응형·접근성 | 2 | 9 | 실기기 safe-area·다크 표 확인 |
+| 7 미결정 | — | 7개 해결, 0개 보류 | — |
+
+## NOT in scope (디자인)
+- 글자 크기 설정, 카테고리 순서 변경: v1.1 유지.
+- 일정 탭 UI: v1.1 유지(데이터는 v1에 생성).
+- 커스텀 일러스트·브랜드 아이콘: 디자인 스킬 단계에서 교체.
+- 태블릿 전용 2단 레이아웃: 개인용 폰 앱이라 680px 가운데 정렬로 충분.
+- 모션 디자인(전환 연출): Montage 기본 전환만, 별도 연출 없음.
+
+## What already exists (디자인)
+- Montage 컴포넌트: bottom-navigation, top-navigation, tab, list, section-header, date-calendar, search-field, segmented-control, checkbox, chip, skeleton, fallback-view, toast, section-message, table, typography.
+- Montage 토큰: `primary.normal`, `label.*`, `line.normal.*`, `accent.foreground.*`, dark 테마, 타이포 `body1-reading`/`heading1`/`title2` 등.
+- 브리핑 원문의 구조(🔎 핵심, `##` 섹션, 표)가 그대로 화면 위계의 재료.
+
+## Implementation Tasks (디자인)
+Synthesized from this review's findings. Each task derives from a specific finding above. Run with Claude Code or Codex; checkbox as you ship.
+
+- [ ] **D-T1 (P1, human: ~4h / CC: ~15min)** — Today — 헤드라인 + 한 줄 리스트 + 말씀 인용 + 10시 전 안내
+  - Surfaced by: Pass 1 D3·D4·D15, Pass 2 D6
+  - Files: `app/src/routes/Today.tsx`, `app/scripts/parse.ts`(headline 계산), `app/scripts/build-data.ts`
+  - Verify: 10:30 전/후, 투자 없는 날짜(7/1), 헤드라인 대체 순서 단위 테스트 + 실기기
+- [ ] **D-T2 (P1, human: ~1d / CC: ~30min)** — 상태 — 화면별 상태표 구현
+  - Surfaced by: Pass 2 D7
+  - Files: `app/src/routes/*.tsx`, `app/src/data.ts`
+  - Verify: 오프라인·없는 날짜 딥링크·액션 0개·iOS 카카오톡 인앱 수동 확인
+- [ ] **D-T3 (P1, human: ~4h / CC: ~20min)** — Day — 스와이프=카테고리, ‹ › 날짜, 표 첫 열 고정, 섹션 칩
+  - Surfaced by: Pass 3 D8·D9
+  - Files: `app/src/routes/Day.tsx`, `app/src/markdown.tsx`
+  - Verify: 투자 표 가로 스크롤 시 카테고리 전환 안 됨, `##` 3개 미만 문서에 칩 없음
+- [ ] **D-T4 (P2, human: ~2h / CC: ~10min)** — markdown — 헤딩 앞 이모지 제거, Montage 타이포 매핑
+  - Surfaced by: Pass 4 D10, Pass 5 D13
+  - Files: `app/src/markdown.tsx`
+  - Verify: `## 🔎 핵심` → "핵심" 렌더, 본문 ✅·📄 유지 테스트
+- [ ] **D-T5 (P2, human: ~2h / CC: ~10min)** — Calendar·Collect — 달력 미리보기, 종목 정렬, 액션 완료/접기
+  - Surfaced by: Pass 1 D5, Pass 7 D17·D18
+  - Files: `app/src/routes/Calendar.tsx`, `app/src/routes/Collect.tsx`
+  - Verify: 칩 필터가 점만 거름, 종목 최근 언급순, 14일 지난 미완료 접힘
+- [ ] **D-T6 (P2, human: ~3h / CC: ~15min)** — 공통 — Montage 매핑, 색 규칙, 접근성·반응형, 설치 안내 위치, 검색 아이콘, 앱 아이콘
+  - Surfaced by: Pass 4 D11, Pass 5 D12, Pass 6 D14, Pass 7 D16·D19
+  - Files: `app/src/App.tsx`, `app/src/routes/Settings.tsx`, `app/vite.config.ts`, `app/public/icons/`
+  - Verify: 다크 모드 표 대비, safe-area, 포커스 링 색, 홈 화면 아이콘 표시(iOS/Android)
+
+## Completion Summary (디자인)
+```
+  +====================================================================+
+  |         DESIGN PLAN REVIEW — COMPLETION SUMMARY                    |
+  +====================================================================+
+  | System Audit         | DESIGN.md 없음, UI 화면 6개 + PWA            |
+  | Step 0               | 5/10, 전체 7개 패스                          |
+  | Pass 1  (Info Arch)  | 4/10 → 8/10 after fixes                      |
+  | Pass 2  (States)     | 5/10 → 9/10 after fixes                      |
+  | Pass 3  (Journey)    | 4/10 → 9/10 after fixes                      |
+  | Pass 4  (AI Slop)    | 4/10 → 8/10 after fixes                      |
+  | Pass 5  (Design Sys) | 3/10 → 8/10 after fixes                      |
+  | Pass 6  (Responsive) | 2/10 → 9/10 after fixes                      |
+  | Pass 7  (Decisions)  | 7 resolved, 0 deferred                       |
+  +--------------------------------------------------------------------+
+  | NOT in scope         | written (5 items)                            |
+  | What already exists  | written                                      |
+  | TODOS.md updates     | 0 items proposed                             |
+  | Approved Mockups     | 0 generated (OpenAI 키 없음), 0 approved      |
+  | Decisions made       | 17 added to plan                             |
+  | Decisions deferred   | 0                                            |
+  | Overall design score | 2/10 → 8/10                                  |
+  +====================================================================+
+```
+
+## Unresolved Decisions (디자인)
+없음.
+
 ## GSTACK REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | — |
-| Outside Review | codex via `/plan-eng-review` | Independent 2nd opinion | 1 | unavailable | Codex 미설치, 네이티브 대체 불가 |
+| Outside Review | codex via `/plan-eng-review`, `/plan-design-review` | Independent 2nd opinion | 2 | unavailable | Codex 미설치. 디자인 단계는 Claude 서브에이전트(in-host)만 완료 |
 | Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | ISSUES OPEN | 26 issues, 0 critical gaps |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | — |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR | score: 2/10 → 8/10, 17 decisions |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 
-- **OUTSIDE COVERAGE:** codex, plan-review, unavailable (CLI 미설치). 이번 리뷰에 외부 모델 검증 없음.
-- **VERDICT:** CLEAR된 리뷰 없음. Eng Review는 모든 결정이 승인됐지만 신규 코드 테스트 GAP 22개가 구현과 함께 해결돼야 하므로 ISSUES OPEN. eng review required (구현 후 `/review`로 diff 리뷰).
+- **OUTSIDE COVERAGE:** codex, plan-review, unavailable(CLI 미설치). codex, design, unavailable; 디자인 단계는 Claude 서브에이전트(in-host) 독립 리뷰만 완료되어 외부 모델 커버리지 없음.
+- **VERDICT:** DESIGN CLEARED. Eng Review는 결정이 모두 승인됐지만 신규 코드 테스트 GAP으로 ISSUES OPEN이고, 이번 디자인 결정으로 `index.json`에 `headline` 필드가 추가됨. eng review required (구현 후 `/review`로 diff 리뷰).
 
 NO UNRESOLVED DECISIONS
