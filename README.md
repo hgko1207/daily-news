@@ -6,7 +6,7 @@
 
 - 시작일: 2026-07-01
 - 갱신: 매일 오전 10시 무렵 (KST)
-- 모바일 앱(PWA): 🚧 준비 중 → [로드맵](#로드맵) 참고
+- 모바일 앱(PWA): **https://hgko1207.github.io/daily-news/** (폰에서 열고 설정 → 앱 설치 방법 참고)
 
 ---
 
@@ -70,7 +70,7 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 
 ## 로드맵
 
-**v1 · 모바일 앱 (PWA)** ✅ 구현됨(배포 대기): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
+**v1 · 모바일 앱 (PWA)** ✅ [배포됨](https://hgko1207.github.io/daily-news/): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
 - 오늘: 오늘의 헤드라인 + 카테고리별 핵심 한 줄, 맨 아래 오늘의 말씀
 - 지난 브리핑: 달력으로 날짜 이동
 - 모아보기: 날짜를 가로질러 ✅ 액션, 관심 종목 언급 타임라인
@@ -97,7 +97,7 @@ npx pnpm@9 test         # 파서·검색·날짜 로직 테스트
 ```
 
 배포: `main`에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 데이터와 앱을 빌드해 GitHub Pages에 올립니다. 스케줄러가 매일 커밋할 때도 자동으로 다시 배포돼요.
-- 저장소 Secrets의 `WDS_PACKAGES_TOKEN`: `read:packages` 권한의 classic PAT. **만료일을 여기에 적어 두세요:** (미등록)
+- 원티드 패키지는 기본 `GITHUB_TOKEN`으로 설치됩니다(2026-10-07 첫 배포에서 확인). 막히면 `read:packages` PAT를 Secrets의 `WDS_PACKAGES_TOKEN`으로 등록하면 우선 사용돼요.
 - Settings → Pages → Source: GitHub Actions
 
 ## 문서

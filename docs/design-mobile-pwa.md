@@ -303,7 +303,7 @@ STEP | 사용자 행동                     | 느낌           | 받쳐주는 �
 ## Open Questions
 
 1. ~~스케줄러 작업 사본 위치~~ → 해결(2026-10-07): 스케줄러 커밋은 작성자 `hgko1207`, UTC 시간대로 **다른 환경에서 push**된다(로컬에는 `git pull`로만 들어옴). 이 폴더의 `app/` 작업이 스케줄러 커밋에 섞이지 않는다. 로컬에서 push 전에는 `git pull --rebase`.
-2. `GITHUB_TOKEN`으로 `@wanteddev/wds`를 설치할 수 있는가? 로컬은 `gh auth refresh -s read:packages`로 확인 완료. CI는 첫 배포에서 확인(워크플로는 `WDS_PACKAGES_TOKEN`이 있으면 우선 사용).
+2. ~~`GITHUB_TOKEN`으로 `@wanteddev/wds` 설치~~ → 해결(2026-10-07): 첫 배포(run 37635997869)에서 PAT 없이 `GITHUB_TOKEN`으로 설치·배포 성공. `WDS_PACKAGES_TOKEN`은 막힐 때를 위한 선택 사항.
 3. ~~앱 이름과 아이콘~~ → 해결(Design Review D19: "데일리 브리핑" / "브리핑", `primary.normal` 블루 배경 + 흰색 Pretendard Bold "브" 아이콘, 디자인 스킬 단계에서 교체 가능).
 4. ~~`06_말씀` 위치~~ → 해결(Design Review D4: 오늘 탭 맨 아래 인용 블록).
 
