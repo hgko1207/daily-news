@@ -70,8 +70,8 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 
 ## 로드맵
 
-**v1 · 모바일 앱 (PWA)**: 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
-- 오늘: 카테고리별 🔎 핵심 카드
+**v1 · 모바일 앱 (PWA)** ✅ 구현됨(배포 대기): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
+- 오늘: 오늘의 헤드라인 + 카테고리별 핵심 한 줄, 맨 아래 오늘의 말씀
 - 지난 브리핑: 달력으로 날짜 이동
 - 모아보기: 날짜를 가로질러 ✅ 액션, 관심 종목 언급 타임라인
 - 검색: 종목·키워드 검색
@@ -83,6 +83,22 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 **v1.1**: 실적·매크로 일정 모아보기, 글자 크기 설정
 
 **v2**: 브리핑과 함께 구조화된 JSON을 남겨서, 브리핑의 예측(예: 실적 컨센서스)을 실제 결과와 비교하는 "채점" 기능
+
+## 앱 개발
+
+```bash
+cd app
+gh auth refresh -h github.com -s read:packages   # 처음 한 번: 원티드 패키지(GitHub Packages) 읽기 권한
+export NODE_AUTH_TOKEN=$(gh auth token)
+npx pnpm@9 install
+npx pnpm@9 build:data   # 브리핑 md → public/data/*.json
+npx pnpm@9 dev          # http://localhost:5173/daily-news/
+npx pnpm@9 test         # 파서·검색·날짜 로직 테스트
+```
+
+배포: `main`에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 데이터와 앱을 빌드해 GitHub Pages에 올립니다. 스케줄러가 매일 커밋할 때도 자동으로 다시 배포돼요.
+- 저장소 Secrets의 `WDS_PACKAGES_TOKEN`: `read:packages` 권한의 classic PAT. **만료일을 여기에 적어 두세요:** (미등록)
+- Settings → Pages → Source: GitHub Actions
 
 ## 문서
 

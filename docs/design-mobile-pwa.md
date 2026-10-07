@@ -302,10 +302,21 @@ STEP | 사용자 행동                     | 느낌           | 받쳐주는 �
 
 ## Open Questions
 
-1. Claude Desktop 스케줄러가 push하는 작업 사본의 위치는? `git pull --rebase`를 추가할 수 있는가?
-2. `GITHUB_TOKEN`으로 `@wanteddev/wds`를 설치할 수 있는가? (스파이크로 확인)
+1. ~~스케줄러 작업 사본 위치~~ → 해결(2026-10-07): 스케줄러 커밋은 작성자 `hgko1207`, UTC 시간대로 **다른 환경에서 push**된다(로컬에는 `git pull`로만 들어옴). 이 폴더의 `app/` 작업이 스케줄러 커밋에 섞이지 않는다. 로컬에서 push 전에는 `git pull --rebase`.
+2. `GITHUB_TOKEN`으로 `@wanteddev/wds`를 설치할 수 있는가? 로컬은 `gh auth refresh -s read:packages`로 확인 완료. CI는 첫 배포에서 확인(워크플로는 `WDS_PACKAGES_TOKEN`이 있으면 우선 사용).
 3. ~~앱 이름과 아이콘~~ → 해결(Design Review D19: "데일리 브리핑" / "브리핑", `primary.normal` 블루 배경 + 흰색 Pretendard Bold "브" 아이콘, 디자인 스킬 단계에서 교체 가능).
 4. ~~`06_말씀` 위치~~ → 해결(Design Review D4: 오늘 탭 맨 아래 인용 블록).
+
+## 구현 메모 (v1, 2026-10-07)
+
+설계와 달라진 점과 이유:
+- **달력:** Montage `DateCalendar`에는 날짜별 표시(점)·비활성화 API가 없어(3.12.2 타입 정의 확인) D5의 "브리핑 있는 날 점 / 없는 날 흐리게"를 지키려고 같은 토큰으로 7열 격자를 직접 그렸다(`app/src/routes/Calendar.tsx`).
+- **보조 텍스트 색:** 캡션은 `label.assistive`(28%) 대신 `label.alternative`(61%). D14 대비 기준 때문.
+- **아이콘 글꼴:** 로컬에 Pretendard가 없어 임시 아이콘의 "브"는 맑은 고딕 Bold로 렌더했다. 디자인 스킬 단계에서 교체.
+- **액션 빈 상태 문구:** "이번 주 액션을 다 해냈어요" → "최근 2주 액션을 다 해냈어요"(D18의 14일 기준과 일치).
+- **추가 의존성:** `workbox-window`(vite-plugin-pwa 등록 코드가 요구), `@emotion/react`(wds-engine peer).
+
+실측: 파일 530개 파싱, 경고 2건(🔎 없는 교양 파일), 종목 15개로 정규화(스페이스X 표기 7종 → SPCX 1개), 액션 471개, JS gzip 224KB, 테스트 52개.
 
 ## Success Criteria
 
