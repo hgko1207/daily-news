@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <!-- 데일리 브리핑 앱 아이콘 원본: 오늘 탭 모양(굵은 헤드라인 1줄 + 요약 3줄), Montage primary.normal 블루.
        그림은 maskable 안전 영역(중심에서 반지름 40%) 안에 있다. PNG는 이 파일로 다시 만든다. -->
-  <rect width="512" height="512" rx="112" fill="#0066FF"/>
+  <rect width="512" height="512" fill="#0066FF"/>
   <rect x="112" y="132" width="288" height="44" rx="22" fill="#FFFFFF"/>
   <rect x="112" y="220" width="220" height="28" rx="14" fill="#FFFFFF" fill-opacity="0.75"/>
   <rect x="112" y="284" width="260" height="28" rx="14" fill="#FFFFFF" fill-opacity="0.75"/>
