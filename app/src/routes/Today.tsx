@@ -146,7 +146,7 @@ export function Today() {
               </Box>
               <Typography
                 variant="body2-reading"
-                color="semantic.label.alternative"
+                color="semantic.label.neutral"
                 sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
               >
                 {c.summary}

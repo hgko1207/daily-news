@@ -129,7 +129,7 @@ export function Search() {
                   </Typography>
                   <Typography
                     variant="body2"
-                    color="semantic.label.alternative"
+                    color="semantic.label.neutral"
                     sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                   >
                     {highlightSegments(snippet(r.text, r.heading), terms).map((s, i) =>

@@ -162,7 +162,7 @@ export function Calendar() {
                     <Typography variant="label1" weight="bold" sx={{ flexShrink: 0 }}>
                       {c.label}
                     </Typography>
-                    <Typography variant="body2" color="semantic.label.alternative" noWrap>
+                    <Typography variant="body2" color="semantic.label.neutral" noWrap>
                       {c.summary}
                     </Typography>
                   </Box>
