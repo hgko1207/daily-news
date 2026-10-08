@@ -173,7 +173,7 @@ export function Today() {
             cursor: 'pointer',
           })}
         >
-          <Typography as="p" variant="caption1" color="semantic.label.assistive" sx={{ display: 'block', marginBottom: 6 }}>
+          <Typography as="p" variant="caption1" color="semantic.label.alternative" sx={{ display: 'block', marginBottom: 6 }}>
             오늘의 말씀
           </Typography>
           <Typography as="p" variant="body1-reading" color="semantic.label.normal" sx={{ display: 'block' }}>

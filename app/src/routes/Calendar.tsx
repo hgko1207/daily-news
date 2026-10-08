@@ -81,7 +81,7 @@ export function Calendar() {
 
       <Box role="grid" aria-label="날짜 선택" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', rowGap: 4 }}>
         {WEEK.map((w) => (
-          <Typography key={w} role="columnheader" variant="caption1" color="semantic.label.assistive" align="center" sx={{ display: 'block', padding: '4px 0' }}>
+          <Typography key={w} role="columnheader" variant="caption1" color="semantic.label.alternative" align="center" sx={{ display: 'block', padding: '4px 0' }}>
             {w}
           </Typography>
         ))}

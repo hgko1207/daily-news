@@ -149,7 +149,7 @@ function ActionItems({ items, done, onToggle }: { items: Action[]; done: Set<str
             <Box as="label" htmlFor={id} sx={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', minWidth: 0 }}>
               <Typography
                 variant="body2-reading"
-                color={checked ? 'semantic.label.assistive' : 'semantic.label.normal'}
+                color={checked ? 'semantic.label.alternative' : 'semantic.label.normal'}
                 sx={{ textDecoration: checked ? 'line-through' : 'none' }}
               >
                 {a.text}
@@ -188,7 +188,7 @@ function Tickers({ tickers, onOpen }: { tickers: Ticker[]; onOpen: (key: string)
             <Typography variant="body1" weight="bold">
               {t.name}
               {t.code && (
-                <Typography as="span" variant="label2" color="semantic.label.assistive" sx={{ marginLeft: 6 }}>
+                <Typography as="span" variant="label2" color="semantic.label.alternative" sx={{ marginLeft: 6 }}>
                   {t.code}
                 </Typography>
               )}
