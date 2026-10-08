@@ -3,6 +3,7 @@ import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
+import { SCROLL_MARGIN } from './layout.tsx';
 
 /**
  * 섹션 바로가기(D9)·검색 결과 이동과 헤딩 id가 같은 규칙을 쓰도록 한 곳에서 만든다.
@@ -53,7 +54,7 @@ const components: Components = {
         variant="heading2"
         weight="bold"
         color="semantic.label.normal"
-        sx={{ display: 'block', margin: '32px 0 10px', scrollMarginTop: 120 }}
+        sx={{ display: 'block', margin: '32px 0 10px', scrollMarginTop: SCROLL_MARGIN }}
       >
         {stripFirst(children)}
       </Typography>
@@ -67,7 +68,7 @@ const components: Components = {
       variant="headline1"
       weight="bold"
       color="semantic.label.normal"
-      sx={{ display: 'block', margin: '24px 0 8px', scrollMarginTop: 120 }}
+      sx={{ display: 'block', margin: '24px 0 8px', scrollMarginTop: SCROLL_MARGIN }}
     >
       {stripFirst(children)}
     </Typography>

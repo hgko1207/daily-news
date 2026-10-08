@@ -2,7 +2,7 @@ import { Box, Button, Divider, SectionHeader, SegmentedControl, SegmentedControl
 import { IconCircleCheckFill, IconCopy, IconRefresh } from '@wanteddev/wds-icon';
 import { useEffect, useState, type ReactNode } from 'react';
 import { canPromptInstall, detectPlatform, isStandalone, onInstallPromptChange, promptInstall, type InstallPlatform } from '../install.ts';
-import { Caption, Page, kstTime, longDate } from '../layout.tsx';
+import { Caption, Page, SCROLL_MARGIN, kstTime, longDate } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 
 const REPO_URL = 'https://github.com/hgko1207/daily-news';
@@ -123,7 +123,7 @@ export function Settings() {
   }, []);
 
   const section = (id: string, title: string, body: ReactNode) => (
-    <Box as="section" id={id} aria-labelledby={`${id}-title`} sx={{ padding: '20px 0', scrollMarginTop: 72 }}>
+    <Box as="section" id={id} aria-labelledby={`${id}-title`} sx={{ padding: '20px 0', scrollMarginTop: SCROLL_MARGIN }}>
       <SectionHeader size="small" headingTag="h2" id={`${id}-title`}>
         {title}
       </SectionHeader>

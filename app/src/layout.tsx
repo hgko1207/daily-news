@@ -14,7 +14,10 @@ import {
 } from '@wanteddev/wds';
 import { IconCalendar, IconHome, IconList, IconSearch, IconSetting } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
-import { useLayoutEffect, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
+
+/** 섹션 제목이 고정 헤더 아래에서 멈추도록 하는 여백(헤더 높이 + 12px). */
+export const SCROLL_MARGIN = 'calc(var(--header-h, 145px) + 12px)';
 import { useLocation, useNavigate } from 'react-router';
 import { dotColor } from './categories.ts';
 
@@ -75,9 +78,21 @@ interface PageProps {
 export function Page({ title, leading, trailing, toolbar, search = true, children }: PageProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
+  // 고정 헤더의 실제 높이를 --header-h로 내보내 섹션 이동 시 제목이 가려지지 않게 한다(Design Audit F5).
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const sync = () => document.documentElement.style.setProperty('--header-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
     <>
       <Box
+        ref={headerRef}
         as="header"
         sx={(t) => ({
           position: 'sticky',
