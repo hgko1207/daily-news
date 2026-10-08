@@ -186,9 +186,18 @@ export function Day() {
 }
 
 /** 헤딩에서 숫자 접두어·괄호를 빼고 앞 6자(D9). */
+const CHIP_MAX = 12;
+
+/**
+ * 헤딩에서 숫자 접두어·괄호를 빼고 12자까지 그대로 보여준다.
+ * 길면 단어 경계(공백·가운뎃점)에서 자른다. 설계(D9)의 6자 자르기는 "관심 종목 …"처럼 단어 중간을 잘라서 바꿈(Design Audit F13).
+ */
 function chipLabel(heading: string): string {
   const clean = heading.replace(/^\d+\.\s*/, '').replace(/\s*\(.*\)\s*/g, ' ').trim();
-  return clean.length > 6 ? `${clean.slice(0, 6)}…` : clean;
+  if (clean.length <= CHIP_MAX) return clean;
+  const cut = clean.slice(0, CHIP_MAX);
+  const boundary = Math.max(cut.lastIndexOf(' '), cut.lastIndexOf('·'));
+  return `${boundary > 3 ? cut.slice(0, boundary) : cut}…`;
 }
 
 function nearestDate(dates: string[], target: string): string | undefined {
