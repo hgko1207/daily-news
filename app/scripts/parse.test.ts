@@ -11,6 +11,7 @@ import {
   extractTickers,
   listSummary,
   normalizeTicker,
+  outlineOf,
   parseEntry,
   pickHeadline,
   resolveEventDate,
@@ -177,8 +178,19 @@ describe('pickHeadline / listSummary', () => {
   it('헤드라인으로 쓴 카테고리는 리스트에서 두 번째 문장, 없으면 첫 섹션 제목을 쓴다', () => {
     const headline = { slug: 'economy', text: 'E1' };
     expect(listSummary(entry('economy', ['E1', 'E2']), headline)).toBe('E2');
-    expect(listSummary(entry('economy', ['E1'], ['1. 코스피']), headline)).toBe('1. 코스피');
+    expect(listSummary(entry('economy', ['E1'], ['1. 코스피']), headline)).toBe('코스피');
     expect(listSummary(entry('global', ['G1']), headline)).toBe('G1');
+  });
+});
+
+describe('outlineOf', () => {
+  it('## 항목을 쓰고 🔎은 뺀다', () => {
+    const md = ['## 🔎 핵심', '문장.', '## 1. 코스피', '### 세부', '## 2. 수출'].join('\n');
+    expect(outlineOf(md)).toEqual(['1. 코스피', '2. 수출']);
+  });
+  it('## 항목이 없으면 ### 항목을 쓴다(2026-10-08 포맷)', () => {
+    const md = ['## 🔎 핵심', '문장.', '---', '### 1. 삼성전자 3Q', '- 요약', '### 2. 코스피'].join('\n');
+    expect(outlineOf(md)).toEqual(['1. 삼성전자 3Q', '2. 코스피']);
   });
 });
 

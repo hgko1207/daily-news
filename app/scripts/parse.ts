@@ -316,6 +316,16 @@ export interface Entry {
   markdown: string;
 }
 
+/**
+ * 섹션 목록(바로가기 칩·오늘 탭 대체 요약용). 보통은 `##` 항목이지만 날에 따라 항목을 `###`로 쓰므로
+ * `##`(🔎 제외)가 없으면 `###`를 쓴다(2026-10-08 국내경제에서 헤드라인이 리스트에 중복되던 문제).
+ */
+export function outlineOf(markdown: string): string[] {
+  const sections = splitSections(markdown).filter((s) => !/^🔎/u.test(s.rawHeading));
+  const h2 = sections.filter((s) => s.level === 2);
+  return (h2.length ? h2 : sections.filter((s) => s.level === 3)).map((s) => s.heading);
+}
+
 export function parseEntry(markdown: string, date: string, category: Category): Entry {
   const { highlights, fallback } = extractHighlights(markdown);
   return {
@@ -325,9 +335,7 @@ export function parseEntry(markdown: string, date: string, category: Category): 
     title: extractTitle(markdown),
     highlights,
     highlightFallback: fallback,
-    outline: splitSections(markdown)
-      .filter((s) => s.level === 2 && !/^🔎/u.test(s.rawHeading))
-      .map((s) => s.heading),
+    outline: outlineOf(markdown),
     markdown,
   };
 }
@@ -354,7 +362,8 @@ export function pickHeadline(entries: Entry[]): Headline | null {
 /** 오늘 탭 리스트의 한 줄. 헤드라인으로 쓴 카테고리는 두 번째 문장(없으면 첫 섹션 제목). */
 export function listSummary(entry: Entry, headline: Headline | null): string {
   if (headline && headline.slug === entry.slug) {
-    return entry.highlights[1] ?? entry.outline[0] ?? entry.highlights[0] ?? '';
+    // 항목 제목의 "1. " 번호는 리스트에서 뺀다
+    return entry.highlights[1] ?? entry.outline[0]?.replace(/^\d+\.\s*/, '') ?? entry.highlights[0] ?? '';
   }
   return entry.highlights[0] ?? entry.outline[0] ?? '';
 }
