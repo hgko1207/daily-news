@@ -71,15 +71,19 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 ## 로드맵
 
 **v1 · 모바일 앱 (PWA)** ✅ [배포됨](https://hgko1207.github.io/daily-news/): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
-- 오늘: 오늘의 헤드라인 + 카테고리별 핵심 한 줄, 맨 아래 오늘의 말씀
-  - 내 위치 날씨: 출근(8시)·점심(12시)·퇴근(18시) 기온과 하늘, 비 확률. 19시부터는 내일 날씨. [Open-Meteo](https://open-meteo.com) 예보를 쓰고, 위치는 이 기기에만 저장합니다.
+- 오늘: 아침 신문 1면처럼 구성한 화면
+  - 제호 "데일리 브리핑"과 호수(그날까지 나온 브리핑 수)
+  - 내 위치 날씨: 출근(8시)·점심(12시)·퇴근(18시) 기온과 하늘, 비 확률, 우산·겉옷 안내. 19시부터는 내일 날씨. [Open-Meteo](https://open-meteo.com) 예보를 쓰고, 위치는 이 기기에만 저장합니다.
+  - 오늘의 헤드라인과 "전문 읽기", 카테고리별 핵심 한 줄을 번호 목차("오늘의 지면")로
+  - 맨 아래 오늘의 말씀
 - 지난 브리핑: 달력으로 날짜 이동
 - 모아보기: 날짜를 가로질러 ✅ 액션, 관심 종목 언급 타임라인
 - 검색: 종목·키워드 검색
 - 설정: iPhone(Safari) / Android(Chrome) 설치 안내, 라이트·다크 테마
 - 스택: Vite + React + [원티드 디자인 시스템 Montage](https://github.com/wanteddev/montage-web), GitHub Actions → GitHub Pages 자동 배포
 - 앱 코드는 `app/` 폴더에 두고, 카테고리 폴더는 스케줄러만 수정합니다.
-- 설계 문서: [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md)
+- 디자인: Montage를 기반으로 쓰고, 제호·지면 번호·날씨 기온·말씀에만 세리프(Hahmlet)를 더했습니다. 기준은 [.impeccable.md](./.impeccable.md)
+- 설계 문서: [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md), 오늘 탭 개편 기록: [docs/design-today-redesign-2026-10-08.md](./docs/design-today-redesign-2026-10-08.md)
 
 **v1.1**: 실적·매크로 일정 모아보기, 글자 크기 설정
 
@@ -94,7 +98,7 @@ export NODE_AUTH_TOKEN=$(gh auth token)
 npx pnpm@9 install
 npx pnpm@9 build:data   # 브리핑 md → public/data/*.json
 npx pnpm@9 dev          # http://localhost:5173/daily-news/
-npx pnpm@9 test         # 파서·검색·날짜 로직 테스트
+npx pnpm@9 test         # 파서·검색·날짜·날씨 로직 테스트
 ```
 
 배포: `main`에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 데이터와 앱을 빌드해 GitHub Pages에 올립니다. 스케줄러가 매일 커밋할 때도 자동으로 다시 배포돼요.
@@ -108,6 +112,7 @@ npx pnpm@9 test         # 파서·검색·날짜 로직 테스트
 | [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md) | 모바일 PWA 설계 (데이터 파이프라인, 화면, 배포, 로드맵) + 엔지니어링 리뷰 결과 |
 | [docs/test-plan-mobile-pwa.md](./docs/test-plan-mobile-pwa.md) | 모바일 PWA 테스트 계획 (화면별 확인 항목, 엣지 케이스) |
 | [docs/design-audit-2026-10-08.md](./docs/design-audit-2026-10-08.md) | 배포본 시각 디자인 감사 결과와 수정 내역 (B- → A-) |
+| [docs/design-today-redesign-2026-10-08.md](./docs/design-today-redesign-2026-10-08.md) | 오늘 탭 개편 기록: 톤 시안 비교와 결정(E안), 내 위치 날씨(W3안) 동작 규칙, 후속 과제 |
 | [.impeccable.md](./.impeccable.md) | 디자인 맥락: 사용자, 톤(차분한 지면 + 단정한 가독), 글꼴·색 규칙, 디자인 원칙 |
 
 ## 고지
