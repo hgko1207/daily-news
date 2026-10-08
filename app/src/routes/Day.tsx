@@ -31,6 +31,17 @@ export function Day() {
     if (load.status === 'ready' && hash) document.getElementById(idFromHash(hash))?.scrollIntoView();
   }, [load.status, hash, active?.slug]);
 
+  // 선택된 카테고리 탭이 가로 목록 밖에 있으면 보이도록 옮긴다(Design Audit F10)
+  useEffect(() => {
+    if (load.status !== 'ready') return;
+    // Radix 스크롤 영역이 자리 잡은 뒤에 옮겨야 적용된다
+    const id = window.setTimeout(() => {
+      const tab = document.querySelector<HTMLElement>('[wds-component="tab-list"] [role="tab"][aria-selected="true"]');
+      tab?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [load.status, active?.slug]);
+
   // 그날 없는 카테고리로 들어오면 첫 카테고리로 바꾼다(D7: 탭 숨김)
   useEffect(() => {
     if (load.status === 'ready' && active && active.slug !== slug) navigate(`/day/${date}/${active.slug}`, { replace: true });
@@ -113,7 +124,14 @@ export function Day() {
   const toolbar = (
     <Box>
       <Tab value={active.slug} onValueChange={(v) => navigate(`/day/${date}/${v}`, { replace: true })}>
-        <TabList resize="hug" size="small">
+        {/* 첫 탭이 화면 끝에 붙어 잘려 보이던 문제: 탭 목록 안쪽 좌우 16px 여백(Design Audit F10) */}
+        <TabList
+          resize="hug"
+          size="small"
+          sx={{
+            '& [data-radix-scroll-area-content] > div': { paddingLeft: 16, paddingRight: 16 },
+          }}
+        >
           {entries.map((e) => (
             <TabListItem key={e.slug} value={e.slug}>
               {e.label}
