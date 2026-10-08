@@ -154,6 +154,8 @@ export function extractActions(markdown: string, date: string, slug: string): Ac
       const text = toPlain(
         line
           .replace(/^\s*[-*]\s+/, '')
+          // 마크다운 체크박스("- [ ] …")는 앱 체크박스와 겹치므로 뗀다(Design Audit F3)
+          .replace(/^\[[ xX]\]\s*/, '')
           .replace(/✅\s*/g, '')
           .replace(/^\*\*액션:?\*\*:?\s*/, ''),
       );

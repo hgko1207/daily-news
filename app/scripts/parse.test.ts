@@ -57,9 +57,10 @@ describe('extractActions', () => {
       '## ✅ 액션 포인트',
       '- 겉옷 챙기기',
       '- 금리 비교 10분',
+      '- [ ] 카드 결제 점검',
     ].join('\n');
     const actions = extractActions(md, '2026-10-06', 'life');
-    expect(actions.map((a) => a.text)).toEqual(['TSMC 실적 확인', '겉옷 챙기기', '금리 비교 10분']);
+    expect(actions.map((a) => a.text)).toEqual(['TSMC 실적 확인', '겉옷 챙기기', '금리 비교 10분', '카드 결제 점검']);
     expect(actions[0]!.id).toMatch(/^2026-10-06-life-/);
   });
 });

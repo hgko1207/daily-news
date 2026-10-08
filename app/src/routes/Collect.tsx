@@ -3,7 +3,8 @@ import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, shortDate, useScrollRestore } from '../layout.tsx';
+import { CATEGORIES } from '../../scripts/parse.ts';
+import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
 import { useLoad, useStore } from '../store.tsx';
 import type { Action, Aggregates, Ticker } from '../types.ts';
 
@@ -104,7 +105,37 @@ function Actions({ data, latest }: { data: Aggregates; latest: string | null }) 
   );
 }
 
+const LABEL = new Map(CATEGORIES.map((c) => [c.slug, c.label]));
+
+/** 날짜별로 묶고(목록이 87개까지 늘어남) 카테고리는 색 점 + 글자로 표시한다(Design Audit F3). */
 function ActionList({ items, done, onToggle }: { items: Action[]; done: Set<string>; onToggle: (id: string, checked: boolean) => void }) {
+  const groups = new Map<string, Action[]>();
+  for (const a of items) groups.set(a.date, [...(groups.get(a.date) ?? []), a]);
+  return (
+    <>
+      {[...groups].map(([date, group]) => (
+        <Box as="section" key={date} aria-label={longDate(date)}>
+          <Box
+            sx={(t) => ({
+              position: 'sticky',
+              top: 'var(--header-h, 0px)',
+              zIndex: 1,
+              padding: '16px 0 6px',
+              background: t.semantic.background.normal.normal,
+            })}
+          >
+            <Typography as="h3" variant="label1" weight="bold" color="semantic.label.normal">
+              {longDate(date)}
+            </Typography>
+          </Box>
+          <ActionItems items={group} done={done} onToggle={onToggle} />
+        </Box>
+      ))}
+    </>
+  );
+}
+
+function ActionItems({ items, done, onToggle }: { items: Action[]; done: Set<string>; onToggle: (id: string, checked: boolean) => void }) {
   return (
     <Box as="ul" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {items.map((a) => {
@@ -125,7 +156,7 @@ function ActionList({ items, done, onToggle }: { items: Action[]; done: Set<stri
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <CategoryDot slug={a.slug} />
-                <Caption>{shortDate(a.date)}</Caption>
+                <Caption>{LABEL.get(a.slug) ?? a.slug}</Caption>
               </Box>
             </Box>
           </Box>
