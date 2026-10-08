@@ -18,7 +18,8 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 /** 섹션 제목이 고정 헤더 아래에서 멈추도록 하는 여백(헤더 높이 + 12px). */
 /** 터치 영역 최소 44×44(Design Audit F8). */
-export const TOUCH_44 = { minWidth: 44, minHeight: 44 };
+// 레이아웃 크기는 그대로 두고(음수 여백) 눌리는 영역만 44px로. 그냥 키우면 헤더 아이콘이 아래로 밀린다.
+export const TOUCH_44 = { minWidth: 44, minHeight: 44, margin: -10 };
 /** 칩은 보이는 크기를 유지하고 눌리는 영역만 위아래로 넓혀 44px로 만든다(F8). */
 export const CHIP_HIT = { position: "relative" as const, "&::after": { content: "\"\"", position: "absolute" as const, left: 0, right: 0, top: -6, bottom: -6 } };
 
