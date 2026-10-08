@@ -1,4 +1,4 @@
-import { Box, ListCell, SectionMessage, Typography } from '@wanteddev/wds';
+import { Box, ListCell, SectionMessage, TextButton, Typography } from '@wanteddev/wds';
 import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -88,14 +88,19 @@ export function Today() {
       )}
 
       {!hintHidden && (
+        // 안내 전체가 아니라 "방법 보기"만 이동한다. 닫기 클릭이 위로 전달돼 설정으로 가던 문제(F2)
         <SectionMessage
           variant="info"
           closeButton
           onOpenChange={(open) => !open && dismissHint()}
-          sx={{ marginBottom: 12, cursor: 'pointer' }}
-          onClick={() => navigate('/settings#install')}
+          trailingButton={
+            <TextButton size="small" onClick={() => navigate('/settings#install')}>
+              방법 보기
+            </TextButton>
+          }
+          sx={{ marginBottom: 12 }}
         >
-          홈 화면에 추가하면 앱처럼 열려요 ›
+          홈 화면에 추가하면 앱처럼 열려요
         </SectionMessage>
       )}
 
