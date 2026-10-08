@@ -1,5 +1,5 @@
 import { Box, Divider, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, Typography } from '@wanteddev/wds';
-import { Children, isValidElement, type ReactNode } from 'react';
+import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
@@ -123,22 +123,7 @@ const components: Components = {
     </Box>
   ),
   // 표: 가로 스크롤, 첫 열 고정, 표 안에서는 카테고리 스와이프 비활성(D8)
-  table: ({ children }) => (
-    <Box data-no-swipe sx={{ margin: '0 0 16px' }}>
-      <Table
-        sx={(t) => ({
-          'th:first-of-type, td:first-of-type': {
-            position: 'sticky',
-            left: 0,
-            zIndex: 1,
-            background: t.semantic.background.normal.normal,
-          },
-        })}
-      >
-        {children}
-      </Table>
-    </Box>
-  ),
+  table: ({ children }) => <TableScroll>{children}</TableScroll>,
   thead: ({ children }) => <TableHead>{children}</TableHead>,
   tbody: ({ children }) => <TableBody>{children}</TableBody>,
   tr: ({ children }) => <TableRow>{children}</TableRow>,
@@ -154,6 +139,61 @@ const components: Components = {
   ),
   img: () => null,
 };
+
+/**
+ * 표: 가로 스크롤, 첫 열 고정, 표 안에서는 카테고리 스와이프 비활성(D8).
+ * 칸을 억지로 좁히지 않고, 오른쪽에 더 있으면 가장자리를 흐리게 표시한다(Design Audit F11).
+ */
+function TableScroll({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const vp = ref.current?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    if (!vp) return;
+    const check = () => setMore(vp.scrollLeft + vp.clientWidth < vp.scrollWidth - 4);
+    check();
+    vp.addEventListener("scroll", check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(vp);
+    return () => {
+      vp.removeEventListener("scroll", check);
+      ro.disconnect();
+    };
+  }, []);
+  return (
+    <Box ref={ref} data-no-swipe sx={{ position: "relative", margin: "0 0 16px" }}>
+      <Table
+        sx={(t) => ({
+          "table": { width: "max-content", minWidth: "100%" },
+          "td, th": { maxWidth: 240 },
+          "th:first-of-type, td:first-of-type": { position: "sticky", left: 0, zIndex: 1, whiteSpace: "nowrap" },
+          "td:first-of-type": { background: t.semantic.background.normal.normal },
+          // 헤더 행의 반투명 배경을 고정 칸에서도 같게(불투명하게 겹쳐 칠함)
+          "th:first-of-type": {
+            background: `linear-gradient(${t.semantic.fill.alternative}, ${t.semantic.fill.alternative}) ${t.semantic.background.normal.normal}`,
+          },
+        })}
+      >
+        {children}
+      </Table>
+      {more && (
+        <Box
+          aria-hidden
+          sx={(t) => ({
+            position: "absolute",
+            top: 1,
+            right: 1,
+            bottom: 1,
+            width: 32,
+            pointerEvents: "none",
+            borderRadius: "0 12px 12px 0",
+            background: `linear-gradient(to right, transparent, ${t.semantic.background.normal.normal})`,
+          })}
+        />
+      )}
+    </Box>
+  );
+}
 
 export function Markdown({ source }: { source: string }) {
   return (
