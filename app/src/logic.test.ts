@@ -4,6 +4,7 @@ import { detectPlatform } from './install.ts';
 import { idFromHash, sectionId } from './markdown.tsx';
 import { highlightSegments, searchDocs } from './search.ts';
 import type { IndexData, SearchDoc } from './types.ts';
+import { advice, skyLabel, summarize, type Forecast } from './weather.ts';
 
 const index = (dates: string[]): IndexData => ({
   generatedAt: '2026-10-07T01:10:00Z',
@@ -57,6 +58,60 @@ describe('issueNumber', () => {
 
   it('브리핑이 없는 날은 호수가 없다', () => {
     expect(issueNumber(data, '2026-10-06')).toBeNull();
+  });
+});
+
+describe('날씨 요약 (W3)', () => {
+  // 10/8 서울 실제 예보 모양(Open-Meteo)
+  const hours = (date: string) => Array.from({ length: 24 }, (_, h) => `${date}T${String(h).padStart(2, '0')}:00`);
+  const forecast: Forecast = {
+    fetchedAt: '2026-10-07T22:50:00Z',
+    hourly: {
+      time: [...hours('2026-10-08'), ...hours('2026-10-09')],
+      temperature_2m: Array.from({ length: 48 }, (_, i) => (i === 8 ? 11.8 : i === 12 ? 20.5 : i === 18 ? 20.5 : i === 32 ? 14.3 : 20)),
+      precipitation_probability: Array.from({ length: 48 }, (_, i) => (i === 42 ? 60 : 0)),
+      weather_code: Array.from({ length: 48 }, (_, i) => (i === 42 ? 61 : 0)),
+    },
+    daily: {
+      time: ['2026-10-08', '2026-10-09'],
+      temperature_2m_max: [22.7, 23.3],
+      temperature_2m_min: [10.7, 13.5],
+      precipitation_probability_max: [0, 60],
+      weather_code: [0, 61],
+    },
+  };
+
+  it('아침에는 오늘의 출근·점심·퇴근 칸을 만든다', () => {
+    const d = summarize(forecast, at('2026-10-08T07:50:00'))!;
+    expect(d.tomorrow).toBe(false);
+    expect(d.slots.map((s) => [s.label, s.hour, s.temp, s.sky])).toEqual([
+      ['출근', 8, 12, '맑음'],
+      ['점심', 12, 21, '맑음'],
+      ['퇴근', 18, 21, '맑음'],
+    ]);
+    expect([d.min, d.max, d.rain]).toEqual([11, 23, 0]);
+    expect(d.advice).toBe('일교차 12° · 겉옷 챙기세요');
+  });
+
+  it('19시부터는 내일 날씨로 넘어간다', () => {
+    const d = summarize(forecast, at('2026-10-08T19:00:00'))!;
+    expect(d.tomorrow).toBe(true);
+    expect(d.date).toBe('2026-10-09');
+    expect(d.slots[2]).toMatchObject({ label: '퇴근', sky: '비', rain: 60 });
+    expect(d.advice).toBe('우산 챙기세요');
+  });
+
+  it('예보에 그날이 없으면 null', () => {
+    expect(summarize(forecast, at('2026-10-11T08:00:00'))).toBeNull();
+  });
+
+  it('조언은 우산·일교차 조건을 합친다', () => {
+    expect(advice(50, 10, 20)).toBe('우산·겉옷 챙기세요');
+    expect(advice(49, 10, 19)).toBeNull();
+  });
+
+  it('WMO 코드를 짧은 한국어로 바꾼다', () => {
+    expect([0, 2, 3, 45, 53, 63, 73, 81, 95].map(skyLabel)).toEqual(['맑음', '구름 조금', '흐림', '안개', '이슬비', '비', '눈', '소나기', '뇌우']);
   });
 });
 

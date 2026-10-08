@@ -7,6 +7,7 @@ import { issueNumber, kstNow, todayView } from '../data.ts';
 import { isStandalone } from '../install.ts';
 import { CHIP_HIT, CategoryDot, ErrorView, ListSkeleton, Page, SERIF, kstTime, longDate, useScrollRestore } from '../layout.tsx';
 import { useStore } from '../store.tsx';
+import { WeatherStrip } from '../weather-strip.tsx';
 
 const HINT_KEY = 'install-hint-dismissed';
 
@@ -146,6 +147,7 @@ export function Today() {
           />
         }
       />
+      <WeatherStrip />
       {view.notice && (
         <Typography as="p" variant="body2" weight="medium" color="semantic.label.neutral" sx={{ display: 'block', marginTop: 12 }}>
           {view.notice === 'arriving' ? '오늘 브리핑은 10시쯤 도착해요' : '오늘 브리핑이 아직 없어요'}
