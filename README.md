@@ -107,6 +107,7 @@ npx pnpm@9 test         # 파서·검색·날짜 로직 테스트
 | [docs/design-mobile-pwa.md](./docs/design-mobile-pwa.md) | 모바일 PWA 설계 (데이터 파이프라인, 화면, 배포, 로드맵) + 엔지니어링 리뷰 결과 |
 | [docs/test-plan-mobile-pwa.md](./docs/test-plan-mobile-pwa.md) | 모바일 PWA 테스트 계획 (화면별 확인 항목, 엣지 케이스) |
 | [docs/design-audit-2026-10-08.md](./docs/design-audit-2026-10-08.md) | 배포본 시각 디자인 감사 결과와 수정 내역 (B- → A-) |
+| [.impeccable.md](./.impeccable.md) | 디자인 맥락: 사용자, 톤(차분한 지면 + 단정한 가독), 글꼴·색 규칙, 디자인 원칙 |
 
 ## 고지
 

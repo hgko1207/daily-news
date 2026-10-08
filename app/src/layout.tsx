@@ -28,6 +28,12 @@ import { useLocation, useNavigate } from 'react-router';
 import { dotColor } from './categories.ts';
 
 export const CONTENT_MAX = 680;
+
+/**
+ * 세리프는 짧은 정체성 요소(제호·지면 번호·말씀)에만 쓴다. 읽는 문장은 Pretendard(.impeccable.md).
+ * Hahmlet은 index.html에서 Google Fonts로 불러오고, 못 불러오면 기기 명조로 대신한다.
+ */
+export const SERIF = "'Hahmlet', 'Noto Serif KR', 'AppleMyungjo', 'Batang', serif";
 const BOTTOM_NAV_HEIGHT = 64;
 
 const WEEKDAY_FULL = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
@@ -96,10 +102,12 @@ interface PageProps {
   toolbar?: ReactNode;
   /** 설정 화면만 검색 아이콘을 숨긴다(D16) */
   search?: boolean;
+  /** 헤더 아래 구분선. 오늘 탭은 제호 괘선이 바로 아래 있어 끈다. */
+  divider?: boolean;
   children: ReactNode;
 }
 
-export function Page({ title, leading, trailing, toolbar, search = true, children }: PageProps) {
+export function Page({ title, leading, trailing, toolbar, search = true, divider = true, children }: PageProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
@@ -124,7 +132,7 @@ export function Page({ title, leading, trailing, toolbar, search = true, childre
           zIndex: 10,
           paddingTop: 'env(safe-area-inset-top)',
           background: t.semantic.background.normal.normal,
-          borderBottom: `1px solid ${t.semantic.line.normal.alternative}`,
+          borderBottom: divider ? `1px solid ${t.semantic.line.normal.alternative}` : 'none',
         })}
       >
         {/* 배경은 전체 폭, 내용은 본문과 같은 열에 맞춘다(Design Audit F4) */}

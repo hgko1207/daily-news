@@ -32,6 +32,15 @@ export function todayView(index: IndexData, now: Date = new Date()): { date: str
   };
 }
 
+/**
+ * 지면 호수: 그날까지 나온 브리핑 수. 날짜 차이로 세지 않는다(스케줄러가 쉰 날은 호수가 없다).
+ * days는 최신순이다. 없는 날짜면 null.
+ */
+export function issueNumber(index: IndexData, date: string): number | null {
+  const pos = index.days.findIndex((d) => d.date === date);
+  return pos === -1 ? null : index.days.length - pos;
+}
+
 /** 새 브리핑 날짜가 생겼는지(토스트 대상). 같은 날짜 재생성은 조용히 갱신한다. */
 export function hasNewBriefing(prev: IndexData | null, next: IndexData): boolean {
   return !!prev && !!next.latestDate && (prev.latestDate ?? '') < next.latestDate;

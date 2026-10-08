@@ -48,10 +48,16 @@ export default defineConfig({
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'briefing-days', expiration: { maxEntries: 400 } },
           },
+          // Google Fonts: CSS는 가끔 바뀌니 SWR, 글꼴 파일은 주소가 버전이라 CacheFirst
           {
-            urlPattern: ({ url }) => url.hostname === 'cdn.jsdelivr.net',
+            urlPattern: ({ url }) => url.hostname === 'fonts.googleapis.com',
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'font-css' },
+          },
+          {
+            urlPattern: ({ url }) => url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'fonts.gstatic.com',
             handler: 'CacheFirst',
-            options: { cacheName: 'fonts', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+            options: { cacheName: 'fonts', expiration: { maxEntries: 200,maxAgeSeconds: 60 * 60 * 24 * 365 } },
           },
         ],
       },

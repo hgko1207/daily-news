@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchAggregates, fetchDay, fetchIndex, hasNewBriefing, kstNow, todayView } from './data.ts';
+import { fetchAggregates, fetchDay, fetchIndex, hasNewBriefing, issueNumber, kstNow, todayView } from './data.ts';
 import { detectPlatform } from './install.ts';
 import { idFromHash, sectionId } from './markdown.tsx';
 import { highlightSegments, searchDocs } from './search.ts';
@@ -44,6 +44,19 @@ describe('todayView (D6)', () => {
 
   it('데이터가 비어 있으면 날짜 없이 안내도 없다', () => {
     expect(todayView(index([]), at('2026-10-07T08:00:00'))).toEqual({ date: null, isToday: false, notice: null });
+  });
+});
+
+describe('issueNumber', () => {
+  const data = index(['2026-10-08', '2026-10-07', '2026-10-05']);
+
+  it('그날까지 나온 브리핑 수를 호수로 쓴다', () => {
+    expect(issueNumber(data, '2026-10-08')).toBe(3);
+    expect(issueNumber(data, '2026-10-05')).toBe(1);
+  });
+
+  it('브리핑이 없는 날은 호수가 없다', () => {
+    expect(issueNumber(data, '2026-10-06')).toBeNull();
   });
 });
 

@@ -3,7 +3,7 @@ import { Children, isValidElement, useEffect, useRef, useState, type ReactNode }
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
-import { SCROLL_MARGIN } from './layout.tsx';
+import { SCROLL_MARGIN, SERIF } from './layout.tsx';
 
 /**
  * 섹션 바로가기(D9)·검색 결과 이동과 헤딩 id가 같은 규칙을 쓰도록 한 곳에서 만든다.
@@ -103,10 +103,17 @@ const components: Components = {
       {children}
     </Box>
   ),
+  // 왼쪽 굵은 세로선 대신 옅은 면으로 구분한다(.impeccable.md 금지 패턴). 투자 면책 문구 등.
   blockquote: ({ children }) => (
     <Box
       as="blockquote"
-      sx={(t) => ({ margin: '0 0 16px', padding: '4px 0 4px 16px', borderLeft: `3px solid ${t.semantic.line.solid.normal}` })}
+      sx={(t) => ({
+        margin: '0 0 16px',
+        padding: '12px 16px',
+        borderRadius: 8,
+        background: t.semantic.fill.alternative,
+        '& p:last-child': { marginBottom: 0 },
+      })}
     >
       {children}
     </Box>
@@ -195,9 +202,29 @@ function TableScroll({ children }: { children: ReactNode }) {
   );
 }
 
-export function Markdown({ source }: { source: string }) {
+// 말씀 본문 인용은 오늘 탭과 같은 세리프로, 면 없이 괘선 사이에 둔다.
+const wordComponents: Components = {
+  ...components,
+  blockquote: ({ children }) => (
+    <Box
+      as="blockquote"
+      sx={(t) => ({
+        margin: '4px 0 16px',
+        padding: '16px 0',
+        borderTop: `1px solid ${t.semantic.line.normal.normal}`,
+        borderBottom: `1px solid ${t.semantic.line.normal.normal}`,
+        '& p': { fontFamily: SERIF, fontSize: 18, fontWeight: 500, lineHeight: 1.8, letterSpacing: '-0.01em', wordBreak: 'keep-all' },
+        '& p:last-child': { marginBottom: 0 },
+      })}
+    >
+      {children}
+    </Box>
+  ),
+};
+
+export function Markdown({ source, slug }: { source: string; slug?: string }) {
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={slug === 'word' ? wordComponents : components}>
       {source}
     </ReactMarkdown>
   );

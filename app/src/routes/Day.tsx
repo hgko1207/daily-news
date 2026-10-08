@@ -179,7 +179,7 @@ export function Day() {
         }}
         sx={{ paddingTop: 8, minHeight: '60vh' }}
       >
-        <Markdown source={active.markdown} />
+        <Markdown source={active.markdown} slug={active.slug} />
       </Box>
     </Page>
   );
