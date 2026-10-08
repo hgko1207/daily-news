@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { kstNow, todayView } from '../data.ts';
 import dayjs from 'dayjs';
 import { isStandalone } from '../install.ts';
-import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, kstTime, longDate, useScrollRestore } from '../layout.tsx';
+import { CHIP_HIT, Caption, CategoryDot, ErrorView, ListSkeleton, Page, kstTime, longDate, useScrollRestore } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 
 const HINT_KEY = 'install-hint-dismissed';
@@ -111,11 +111,12 @@ export function Today() {
           closeButton
           onOpenChange={(open) => !open && dismissHint()}
           trailingButton={
-            <TextButton size="small" onClick={() => navigate('/settings#install')}>
+            <TextButton size="small" sx={CHIP_HIT} onClick={() => navigate('/settings#install')}>
               방법 보기
             </TextButton>
           }
-          sx={{ marginBottom: 12 }}
+          // 닫기 버튼 터치 영역 44px(F8). 아이콘 크기와 위치는 그대로 두고 여백으로 넓힌다.
+          sx={{ marginBottom: 12, '& button[aria-label="Close message"]': { minWidth: 44, minHeight: 44, margin: -12 } }}
         >
           홈 화면에 추가하면 앱처럼 열려요
         </SectionMessage>

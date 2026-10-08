@@ -17,6 +17,11 @@ import dayjs from 'dayjs';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 /** 섹션 제목이 고정 헤더 아래에서 멈추도록 하는 여백(헤더 높이 + 12px). */
+/** 터치 영역 최소 44×44(Design Audit F8). */
+export const TOUCH_44 = { minWidth: 44, minHeight: 44 };
+/** 칩은 보이는 크기를 유지하고 눌리는 영역만 위아래로 넓혀 44px로 만든다(F8). */
+export const CHIP_HIT = { position: "relative" as const, "&::after": { content: "\"\"", position: "absolute" as const, left: 0, right: 0, top: -6, bottom: -6 } };
+
 export const SCROLL_MARGIN = 'calc(var(--header-h, 145px) + 12px)';
 import { useLocation, useNavigate } from 'react-router';
 import { dotColor } from './categories.ts';
@@ -58,7 +63,7 @@ function currentTab(pathname: string): string {
 export function SearchButton() {
   const navigate = useNavigate();
   return (
-    <TopNavigationButton variant="icon" aria-label="검색" onClick={() => navigate('/search')}>
+    <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="검색" onClick={() => navigate('/search')}>
       <IconSearch />
     </TopNavigationButton>
   );

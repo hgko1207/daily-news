@@ -3,7 +3,7 @@ import { IconChevronLeft, IconChevronRight, IconChevronRightSmall } from '@wante
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate } from '../layout.tsx';
+import { CHIP_HIT, Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 import type { IndexDay } from '../types.ts';
 
@@ -69,11 +69,11 @@ export function Calendar() {
       </Box>
 
       <Box role="group" aria-label="카테고리 필터" sx={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 12 }}>
-        <Chip size="small" variant="outlined" active={!filter} onClick={() => setFilter(null)}>
+        <Chip size="small" variant="outlined" sx={CHIP_HIT} active={!filter} onClick={() => setFilter(null)}>
           전체
         </Chip>
         {categories.map((c) => (
-          <Chip key={c.slug} size="small" variant="outlined" active={filter === c.slug} onClick={() => setFilter(filter === c.slug ? null : c.slug)}>
+          <Chip key={c.slug} size="small" variant="outlined" sx={CHIP_HIT} active={filter === c.slug} onClick={() => setFilter(filter === c.slug ? null : c.slug)}>
             {c.label}
           </Chip>
         ))}

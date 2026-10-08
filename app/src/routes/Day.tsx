@@ -2,7 +2,7 @@ import { Box, Chip, Skeleton, Tab, TabList, TabListItem, TopNavigationButton, Ty
 import { IconArrowLeft, IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { ErrorView, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
+import { CHIP_HIT, ErrorView, Page, TOUCH_44, longDate, shortDate, useScrollRestore } from '../layout.tsx';
 import { Markdown, idFromHash, sectionId } from '../markdown.tsx';
 import { useLoad, useStore } from '../store.tsx';
 
@@ -44,7 +44,7 @@ export function Day() {
 
   const header = {
     leading: (
-      <TopNavigationButton variant="icon" aria-label="오늘로" onClick={() => navigate('/')}>
+      <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="오늘로" onClick={() => navigate('/')}>
         <IconArrowLeft />
       </TopNavigationButton>
     ),
@@ -52,7 +52,7 @@ export function Day() {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <TopNavigationButton
           variant="icon"
-          size="small"
+          sx={TOUCH_44}
           aria-label="이전 날짜"
           disabled={!older}
           onClick={() => older && navigate(`/day/${older}/${active?.slug ?? ''}`)}
@@ -64,7 +64,7 @@ export function Day() {
         </Typography>
         <TopNavigationButton
           variant="icon"
-          size="small"
+          sx={TOUCH_44}
           aria-label="다음 날짜"
           disabled={!newer}
           onClick={() => newer && navigate(`/day/${newer}/${active?.slug ?? ''}`)}
@@ -129,6 +129,7 @@ export function Day() {
         >
           {active.outline.map((h) => (
             <Chip
+              sx={CHIP_HIT}
               key={h}
               size="small"
               variant="outlined"

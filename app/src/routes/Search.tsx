@@ -2,7 +2,7 @@ import { Box, Chip, ListCell, SearchField, TopNavigationButton, Typography } fro
 import { IconArrowLeft } from '@wanteddev/wds-icon';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Caption, CategoryDot, ErrorView, Page, shortDate } from '../layout.tsx';
+import { CHIP_HIT, Caption, CategoryDot, ErrorView, Page, TOUCH_44, shortDate } from '../layout.tsx';
 import { sectionId } from '../markdown.tsx';
 import { highlightSegments, searchDocs, searchTerms } from '../search.ts';
 import { useLoad, useStore } from '../store.tsx';
@@ -46,7 +46,7 @@ export function Search() {
   const chips = recentTickers.length > 0 && (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 12 }}>
       {recentTickers.map((t) => (
-        <Chip key={t.key} size="small" variant="outlined" onClick={() => setInput(t.name)}>
+        <Chip key={t.key} size="small" variant="outlined" sx={CHIP_HIT} onClick={() => setInput(t.name)}>
           {t.name}
         </Chip>
       ))}
@@ -58,7 +58,7 @@ export function Search() {
       title="검색"
       search={false}
       leading={
-        <TopNavigationButton variant="icon" aria-label="뒤로" onClick={() => navigate(-1)}>
+        <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="뒤로" onClick={() => navigate(-1)}>
           <IconArrowLeft />
         </TopNavigationButton>
       }
