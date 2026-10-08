@@ -12,7 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@wanteddev/wds';
-import { IconCalendar, IconHome, IconList, IconSearch, IconSetting } from '@wanteddev/wds-icon';
+import { IconArrowLeft, IconCalendar, IconHome, IconList, IconSearch, IconSetting } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
@@ -58,6 +58,24 @@ const TABS = [
 function currentTab(pathname: string): string {
   if (pathname.startsWith('/day')) return '/';
   return TABS.find((t) => t.value !== '/' && pathname.startsWith(t.value))?.value ?? (pathname === '/' ? '/' : '');
+}
+
+/**
+ * 모든 화면 공통 뒤로가기(Design Audit F12): 앱 안에서 이동해 왔으면 이전 화면,
+ * 링크로 바로 열었으면(이전 기록 없음) fallback으로 간다. React Router는 history.state.idx에 위치를 둔다.
+ */
+export function BackButton({ fallback }: { fallback: string }) {
+  const navigate = useNavigate();
+  const back = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate(fallback, { replace: true });
+  };
+  return (
+    <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="뒤로" onClick={back}>
+      <IconArrowLeft />
+    </TopNavigationButton>
+  );
 }
 
 export function SearchButton() {

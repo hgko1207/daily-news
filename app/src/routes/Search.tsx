@@ -1,8 +1,7 @@
-import { Box, Chip, ListCell, SearchField, TopNavigationButton, Typography } from '@wanteddev/wds';
-import { IconArrowLeft } from '@wanteddev/wds-icon';
+import { Box, Chip, ListCell, SearchField, Typography } from '@wanteddev/wds';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { CHIP_HIT, Caption, CategoryDot, ErrorView, Page, TOUCH_44, shortDate } from '../layout.tsx';
+import { BackButton, CHIP_HIT, Caption, CategoryDot, ErrorView, Page, shortDate } from '../layout.tsx';
 import { sectionId } from '../markdown.tsx';
 import { highlightSegments, searchDocs, searchTerms } from '../search.ts';
 import { useLoad, useStore } from '../store.tsx';
@@ -57,11 +56,7 @@ export function Search() {
     <Page
       title="검색"
       search={false}
-      leading={
-        <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="뒤로" onClick={() => navigate(-1)}>
-          <IconArrowLeft />
-        </TopNavigationButton>
-      }
+      leading={<BackButton fallback="/" />}
       toolbar={
         <Box sx={{ padding: '8px 16px 12px' }}>
           <SearchField

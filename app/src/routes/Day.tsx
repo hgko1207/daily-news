@@ -1,8 +1,8 @@
 import { Box, Chip, Skeleton, Tab, TabList, TabListItem, TopNavigationButton, Typography } from '@wanteddev/wds';
-import { IconArrowLeft, IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
+import { IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { CHIP_HIT, ErrorView, Page, TOUCH_44, longDate, shortDate, useScrollRestore } from '../layout.tsx';
+import { BackButton, CHIP_HIT, ErrorView, Page, TOUCH_44, longDate, shortDate, useScrollRestore } from '../layout.tsx';
 import { Markdown, idFromHash, sectionId } from '../markdown.tsx';
 import { useLoad, useStore } from '../store.tsx';
 
@@ -54,11 +54,7 @@ export function Day() {
   };
 
   const header = {
-    leading: (
-      <TopNavigationButton variant="icon" sx={TOUCH_44} aria-label="오늘로" onClick={() => navigate('/')}>
-        <IconArrowLeft />
-      </TopNavigationButton>
-    ),
+    leading: <BackButton fallback="/" />,
     title: (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <TopNavigationButton

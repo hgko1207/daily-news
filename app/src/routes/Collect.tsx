@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { CATEGORIES } from '../../scripts/parse.ts';
-import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
+import { BackButton, Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
 import { useLoad, useStore } from '../store.tsx';
 import type { Action, Aggregates, Ticker } from '../types.ts';
 
@@ -37,7 +37,8 @@ export function Collect() {
   );
 
   return (
-    <Page title="모아보기" toolbar={control}>
+    // 종목 상세에서는 헤더에 뒤로 버튼을 둔다(다른 상세 화면과 같은 패턴, Design Audit F12)
+    <Page title="모아보기" toolbar={control} leading={ticker ? <BackButton fallback="/collect?tab=tickers" /> : undefined}>
       {load.status === 'loading' && <ListSkeleton />}
       {load.status === 'error' && <ErrorView title="불러오지 못했어요" description="연결되면 불러올게요" onRetry={load.retry} />}
       {load.status === 'ready' &&
@@ -208,10 +209,7 @@ function TickerTimeline({ ticker }: { ticker?: Ticker }) {
   if (!ticker) return <ErrorView description="종목을 찾지 못했어요" />;
   return (
     <Box sx={{ paddingTop: 16 }}>
-      <TextButton color="assistive" size="small" onClick={() => navigate('/collect?tab=tickers')}>
-        ‹ 종목 목록
-      </TextButton>
-      <Typography as="h2" variant="heading2" weight="bold" sx={{ display: 'block', margin: '12px 0 4px' }}>
+      <Typography as="h2" variant="heading2" weight="bold" sx={{ display: 'block', margin: '0 0 4px' }}>
         {ticker.name}
       </Typography>
       <Caption>
