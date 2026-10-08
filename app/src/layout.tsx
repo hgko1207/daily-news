@@ -103,18 +103,21 @@ export function Page({ title, leading, trailing, toolbar, search = true, childre
           borderBottom: `1px solid ${t.semantic.line.normal.alternative}`,
         })}
       >
-        <TopNavigation
-          leadingContent={leading}
-          trailingContent={
-            <>
-              {trailing}
-              {search && <SearchButton />}
-            </>
-          }
-          toolbar={toolbar}
-        >
-          {title}
-        </TopNavigation>
+        {/* 배경은 전체 폭, 내용은 본문과 같은 열에 맞춘다(Design Audit F4) */}
+        <Box sx={{ maxWidth: CONTENT_MAX, margin: '0 auto' }}>
+          <TopNavigation
+            leadingContent={leading}
+            trailingContent={
+              <>
+                {trailing}
+                {search && <SearchButton />}
+              </>
+            }
+            toolbar={toolbar}
+          >
+            {title}
+          </TopNavigation>
+        </Box>
       </Box>
       <Box
         as="main"
@@ -140,11 +143,13 @@ export function Page({ title, leading, trailing, toolbar, search = true, childre
           borderTop: `1px solid ${t.semantic.line.normal.alternative}`,
         })}
       >
-        <BottomNavigation value={currentTab(pathname)} onValueChange={(v) => navigate(v)}>
-          {TABS.map((t) => (
-            <BottomNavigationItem key={t.value} value={t.value} label={t.label} icon={t.icon} />
-          ))}
-        </BottomNavigation>
+        <Box sx={{ maxWidth: CONTENT_MAX, margin: '0 auto' }}>
+          <BottomNavigation value={currentTab(pathname)} onValueChange={(v) => navigate(v)}>
+            {TABS.map((t) => (
+              <BottomNavigationItem key={t.value} value={t.value} label={t.label} icon={t.icon} />
+            ))}
+          </BottomNavigation>
+        </Box>
       </Box>
     </>
   );
