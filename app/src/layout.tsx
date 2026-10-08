@@ -149,7 +149,12 @@ export function Page({ title, leading, trailing, toolbar, search = true, childre
         })}
       >
         <Box sx={{ maxWidth: CONTENT_MAX, margin: '0 auto' }}>
-          <BottomNavigation value={currentTab(pathname)} onValueChange={(v) => navigate(v)}>
+          {/* Montage 기본 라벨 11px → 12px(Design Audit F9). 탭 라벨은 aria-labelledby로 연결된 span */}
+          <BottomNavigation
+            value={currentTab(pathname)}
+            onValueChange={(v) => navigate(v)}
+            sx={{ '[wds-component="bottom-navigation-item"] span': { fontSize: 12, lineHeight: '16px' } }}
+          >
             {TABS.map((t) => (
               <BottomNavigationItem key={t.value} value={t.value} label={t.label} icon={t.icon} />
             ))}
