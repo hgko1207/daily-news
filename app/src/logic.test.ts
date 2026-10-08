@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchAggregates, fetchDay, fetchIndex, hasNewBriefing, kstNow, todayView } from './data.ts';
 import { detectPlatform } from './install.ts';
+import { idFromHash, sectionId } from './markdown.tsx';
 import { highlightSegments, searchDocs } from './search.ts';
 import type { IndexData, SearchDoc } from './types.ts';
 
@@ -120,5 +121,20 @@ describe('detectPlatform (D7)', () => {
     [safari, true, 0, 'standalone'],
   ])('%#', (ua, standalone, touch, expected) => {
     expect(detectPlatform(ua as string, standalone as boolean, touch as number)).toBe(expected);
+  });
+});
+
+describe('섹션 이동 id (Design Audit F1)', () => {
+  it.each(['반도체 업황 (HBM·DRAM·촉매)', '국내', '3. 증시: 코스피 약세·코스닥 강세', '오늘의 한 줄'])(
+    '브라우저가 인코딩한 해시를 디코딩하면 헤딩 id와 같다: %s',
+    (heading) => {
+      const id = sectionId(heading);
+      const hash = `#${encodeURIComponent(id)}`;
+      expect(idFromHash(hash)).toBe(id);
+    },
+  );
+
+  it('잘못된 인코딩이어도 예외 없이 원문을 쓴다', () => {
+    expect(idFromHash('#sec-%E0%A4%A')).toBe('sec-%E0%A4%A');
   });
 });

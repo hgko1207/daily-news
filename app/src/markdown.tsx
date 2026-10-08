@@ -4,9 +4,22 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
 
-/** 섹션 바로가기(D9)와 헤딩 id가 같은 규칙을 쓰도록 한 곳에서 만든다. */
+/**
+ * 섹션 바로가기(D9)·검색 결과 이동과 헤딩 id가 같은 규칙을 쓰도록 한 곳에서 만든다.
+ * id는 원문 그대로 둔다. URL 해시는 브라우저가 인코딩하므로 읽는 쪽에서 디코딩해 비교한다(F1).
+ */
 export function sectionId(heading: string): string {
-  return `sec-${encodeURIComponent(heading.replace(/\s+/g, '-'))}`;
+  return `sec-${heading.trim().replace(/\s+/g, '-')}`;
+}
+
+/** URL 해시(#sec-…)에서 섹션 id를 꺼낸다. 잘못된 인코딩이면 원문을 그대로 쓴다. */
+export function idFromHash(hash: string): string {
+  const raw = hash.replace(/^#/, '');
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 function textOf(node: ReactNode): string {
@@ -46,8 +59,16 @@ const components: Components = {
       </Typography>
     );
   },
+  // ### 헤딩도 검색 결과 단위라 id가 필요하다(F1).
   h3: ({ children }) => (
-    <Typography as="h4" variant="headline1" weight="bold" color="semantic.label.normal" sx={{ display: 'block', margin: '24px 0 8px' }}>
+    <Typography
+      as="h4"
+      id={sectionId(stripLeadingEmoji(textOf(children)))}
+      variant="headline1"
+      weight="bold"
+      color="semantic.label.normal"
+      sx={{ display: 'block', margin: '24px 0 8px', scrollMarginTop: 120 }}
+    >
       {stripFirst(children)}
     </Typography>
   ),

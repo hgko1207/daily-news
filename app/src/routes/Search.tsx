@@ -119,7 +119,7 @@ export function Search() {
                 role="link"
                 tabIndex={0}
                 onClick={() => navigate(`/day/${r.date}/${r.slug}#${sectionId(r.heading)}`)}
-                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate(`/day/${r.date}/${r.slug}`)}
+                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate(`/day/${r.date}/${r.slug}#${sectionId(r.heading)}`)}
                 sx={{ cursor: 'pointer' }}
               >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>

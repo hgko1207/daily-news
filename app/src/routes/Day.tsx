@@ -3,7 +3,7 @@ import { IconArrowLeft, IconChevronLeft, IconChevronRight } from '@wanteddev/wds
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { ErrorView, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
-import { Markdown, sectionId } from '../markdown.tsx';
+import { Markdown, idFromHash, sectionId } from '../markdown.tsx';
 import { useLoad, useStore } from '../store.tsx';
 
 const SWIPE_MIN_X = 60;
@@ -28,7 +28,7 @@ export function Day() {
   // 검색 결과에서 들어오면 해당 섹션으로 이동
   const { hash } = useLocation();
   useEffect(() => {
-    if (load.status === 'ready' && hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+    if (load.status === 'ready' && hash) document.getElementById(idFromHash(hash))?.scrollIntoView();
   }, [load.status, hash, active?.slug]);
 
   // 그날 없는 카테고리로 들어오면 첫 카테고리로 바꾼다(D7: 탭 숨김)

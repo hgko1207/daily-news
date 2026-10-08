@@ -91,7 +91,8 @@ export function splitSections(markdown: string): Section[] {
     if (m) {
       flush();
       const raw = m[2]!.trim();
-      current = { level: m[1]!.length as 2 | 3, rawHeading: raw, heading: stripLeadingEmoji(raw), body: '' };
+      // 화면 헤딩 id(평문)와 맞추려고 마크다운 문법을 걷어낸다(Design Audit F1).
+      current = { level: m[1]!.length as 2 | 3, rawHeading: raw, heading: stripLeadingEmoji(toPlain(raw)), body: '' };
     } else if (current) {
       buf.push(line);
     }
