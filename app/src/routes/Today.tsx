@@ -2,9 +2,10 @@ import { Box, ListCell, SectionMessage, TextButton, Typography } from '@wantedde
 import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { todayView } from '../data.ts';
+import { kstNow, todayView } from '../data.ts';
+import dayjs from 'dayjs';
 import { isStandalone } from '../install.ts';
-import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, kstTime, longDate, shortDate, useScrollRestore } from '../layout.tsx';
+import { Caption, CategoryDot, ErrorView, ListSkeleton, Page, kstTime, longDate, useScrollRestore } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 
 const HINT_KEY = 'install-hint-dismissed';
@@ -64,14 +65,30 @@ export function Today() {
   return (
     <Page title="데일리 브리핑">
       <Box as="section" aria-label="날짜" sx={{ padding: '20px 0 4px' }}>
-        <Typography as="p" variant="headline2" weight="bold" color="semantic.label.normal">
-          {longDate(day.date)}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Typography as="p" variant="headline2" weight="bold" color="semantic.label.normal">
+            {longDate(day.date)}
+          </Typography>
+          {/* 오늘이 아닌 브리핑임을 날짜 옆에서 바로 알 수 있게(Design Audit F6) */}
+          {!view.isToday && (
+            <Typography
+              variant="label2"
+              weight="medium"
+              color="semantic.label.neutral"
+              sx={(t) => ({ padding: '2px 8px', borderRadius: 6, background: t.semantic.fill.normal })}
+            >
+              {day.date === kstYesterday() ? '어제 브리핑' : '지난 브리핑'}
+            </Typography>
+          )}
+        </Box>
+        {view.notice && (
+          <Typography as="p" variant="body2" weight="medium" color="semantic.label.neutral" sx={{ display: 'block', marginTop: 4 }}>
+            {view.notice === 'arriving' ? '오늘 브리핑은 10시쯤 도착해요' : '오늘 브리핑이 아직 없어요'}
+          </Typography>
+        )}
         <Caption>
           {online ? `${kstTime(data.generatedAt)} 업데이트` : `오프라인 · 마지막 업데이트 ${kstTime(data.generatedAt)}`}
         </Caption>
-        {view.notice === 'arriving' && <Caption>오늘 브리핑은 10시쯤 도착해요</Caption>}
-        {view.notice === 'missing' && <Caption>오늘 브리핑이 아직 없어요 · 마지막 {shortDate(day.date)}</Caption>}
       </Box>
 
       {day.headline && (
@@ -166,4 +183,8 @@ export function Today() {
       )}
     </Page>
   );
+}
+
+function kstYesterday(): string {
+  return dayjs(kstNow().date).subtract(1, 'day').format('YYYY-MM-DD');
 }
