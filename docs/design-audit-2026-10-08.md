@@ -93,13 +93,13 @@ Goodwill: 60 ██████████████████░░░░�
 | F13 칩 말줄임 | verified | 086d731 | "관심 종목 촉매", "함께 읽으면 좋은 구절" 전체 표시 |
 | F14 타이포·간격 체계 | deferred | — | /design-consultation으로 DESIGN.md 만들 때 정리 |
 | F15 헤딩 구조·상태 표현 | deferred | — | 같은 단계 |
-| **F16 (신규) label.alternative 대비 약 3.7:1** | **deferred (결정 필요)** | — | 렌더 색 rgba(55,56,60,0.61) on #FFF. WCAG AA 4.5:1 미달. Montage 관례와 충돌 |
+| F16 (신규) label.alternative 대비 약 3.7:1 | verified (A안: 요약문만 neutral) | 이번 커밋 | 렌더 색 rgba(55,56,60,0.61) on #FFF. WCAG AA 4.5:1 미달. Montage 관례와 충돌 |
 
-- 총 16건(원래 15 + 감사 중 발견 1), 수정 13건(모두 verified), 보류 3건, 되돌림 0건
+- 총 16건(원래 15 + 감사 중 발견 1), 수정 14건(모두 verified), 보류 2건, 되돌림 0건
 - 콘솔 오류: 수정 전 0(의도된 404 제외) → 수정 후 0
 - 테스트: 52 → 57
 - Design Score: B- → **A-** (계산값 3.64/4.0)
 - AI Slop Score: A → A
 - Detector: not installed
 
-> PR 한 줄 요약: "Design review found 16 issues, fixed 13. Design score B- → A-, AI slop score A → A."
+> PR 한 줄 요약: "Design review found 16 issues, fixed 14. Design score B- → A-, AI slop score A → A."
