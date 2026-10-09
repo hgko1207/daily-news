@@ -122,7 +122,7 @@ daily-news/
    ```ts
    type Day = { date: string; entries: { slug: string; title: string; highlights: string[]; markdown: string }[] };
    ```
-3. `search.json`: 검색 코퍼스(Eng Review D3에서 MiniSearch 대신 **부분문자열 스캔**으로 확정). 단위는 "항목"(`##`/`###` 섹션 하나)이고, `text`는 헤딩 + 본문 최대 200자다. 클라이언트는 검색어를 공백으로 나눠 **모두 포함(AND)**하는 섹션을 `String.includes`로 찾아 최신순 최대 100개를 보여준다. 입력 후 200ms 디바운스. 한국어 조사가 붙은 단어("삼성전자는")나 단어 중간("전자")도 찾을 수 있다.
+3. `search.json`: 검색 코퍼스(Eng Review D3에서 MiniSearch 대신 **부분문자열 스캔**으로 확정). 단위는 "항목"(`##`/`###` 섹션 하나)이고, `text`는 헤딩 + 본문 최대 200자다. 클라이언트는 검색어를 공백으로 나눠 **모두 포함(AND)**하는 섹션을 `String.includes`로 찾아 최신순 최대 100개를 보여준다. 입력 후 200ms 디바운스. 한국어 조사가 붙은 단어("삼성전자는")나 단어 중간("전자")도 찾을 수 있다. 파일은 월별로 나누고 이름에 내용 해시를 붙인다(`search-2026-09.e5f48968.json`, 목록은 `index.json`의 `searchFiles`). 지난달 파일은 이름이 그대로라 서비스 워커가 CacheFirst로 다시 받지 않고, 매일 바뀌는 건 이번 달 파일 하나다(2026-10-09 재감사, 이전에는 반기 파일).
    ```ts
    type SearchDoc = { id: string; date: string; slug: string; heading: string; text: string };
    ```
