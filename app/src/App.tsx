@@ -3,6 +3,7 @@ import { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { ListSkeleton, Page } from './layout.tsx';
+import { localizeMontageLabels, montageContrastStyles, montageTouchStyles } from './montage-overrides.ts';
 import { Today } from './routes/Today.tsx';
 import { StoreProvider } from './store.tsx';
 
@@ -97,6 +98,10 @@ function GlobalStyles() {
           fontFamily:
             "'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
           WebkitTextSizeAdjust: '100%',
+          // 한국어는 단어(어절) 단위로 줄을 바꾸고, URL처럼 공백 없이 긴 문자열만 필요할 때 끊는다.
+          // Montage ListCell과 같은 조합. 기본값(normal)은 "끌|고", "브리|핑"처럼 단어 중간에서 끊었다(재감사 P3)
+          wordBreak: 'keep-all',
+          overflowWrap: 'break-word',
           overscrollBehaviorY: 'none',
         },
         '::selection': { background: `rgba(var(--semantic-primary-normal-rgb), 0.2)` },
@@ -105,6 +110,8 @@ function GlobalStyles() {
         '@media (prefers-reduced-motion: reduce)': {
           '*, *::before, *::after': { animationDuration: '0.01ms !important', transitionDuration: '0.01ms !important', scrollBehavior: 'auto' },
         },
+        ...montageContrastStyles(t),
+        ...montageTouchStyles,
       })}
     />
   );
@@ -112,6 +119,7 @@ function GlobalStyles() {
 
 export function App() {
   usePrefetchRoutes();
+  useEffect(() => localizeMontageLabels(), []);
   return (
     <StoreProvider>
       <GlobalStyles />

@@ -5,7 +5,8 @@ import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { issueNumber, kstNow, todayView } from '../data.ts';
 import { isStandalone } from '../install.ts';
-import { CHIP_HIT, CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
+import { CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, TEXT_BUTTON_HIT, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
+import { demoteSectionMessageTitle } from '../montage-overrides.ts';
 import { useStore } from '../store.tsx';
 import { WeatherStrip } from '../weather-strip.tsx';
 
@@ -189,7 +190,7 @@ export function Today() {
             variant="heading2"
             weight="bold"
             color="semantic.label.normal"
-            sx={{ display: 'block', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}
+            sx={{ display: 'block', marginTop: 10, lineHeight: 1.5 }}
           >
             {day.headline.text}
           </Typography>
@@ -210,16 +211,21 @@ export function Today() {
       {!hintHidden && (
         // 안내 전체가 아니라 "방법 보기"만 이동한다. 닫기 클릭이 위로 전달돼 설정으로 가던 문제(F2)
         <SectionMessage
+          ref={demoteSectionMessageTitle}
+          // Montage 기본은 role="alert"라 오늘 탭을 열 때마다 스크린 리더가 끼어들어 읽었다. 급한 알림이 아닌 안내다(재감사 P2)
+          role="note"
           variant="info"
           closeButton
           onOpenChange={(open) => !open && dismissHint()}
           trailingButton={
-            <TextButton size="small" sx={CHIP_HIT} onClick={() => navigate('/settings#install')}>
+            <TextButton size="small" sx={TEXT_BUTTON_HIT} onClick={() => navigate('/settings#install')}>
               방법 보기
             </TextButton>
           }
           // 닫기 버튼 터치 영역 44px(F8). 아이콘 크기와 위치는 그대로 두고 여백으로 넓힌다.
-          sx={{ marginTop: 16, '& button[aria-label="Close message"]': { minWidth: 44, minHeight: 44, margin: -12 } }}
+          // aria-label은 montage-overrides가 한국어로 바꾸므로 라벨이 아닌 data-role로 찾는다.
+          // 왼쪽만 -8px: 닫기의 눌림 표시가 버튼 밖으로 약 5px 나와 "방법 보기" 오른쪽 끝을 덮었다. 아이콘 위치는 그대로
+          sx={{ marginTop: 16, '& [data-role="section-message-close-icon"]': { minWidth: 44, minHeight: 44, margin: '-12px -12px -12px -8px' } }}
         >
           홈 화면에 추가하면 앱처럼 열려요
         </SectionMessage>
@@ -268,7 +274,7 @@ export function Today() {
                   variant="body1-reading"
                   weight="medium"
                   color="semantic.label.normal"
-                  sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'keep-all' }}
+                  sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                 >
                   {c.summary}
                 </Typography>

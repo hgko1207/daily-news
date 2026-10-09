@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { CATEGORIES } from '../../scripts/parse.ts';
-import { BackButton, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, longDate, metaColor, shortDate, useScrollRestore } from '../layout.tsx';
+import { BackButton, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, TEXT_BUTTON_HIT, longDate, metaColor, shortDate, useScrollRestore } from '../layout.tsx';
 import { useLoad, useStore } from '../store.tsx';
 import type { Action, Aggregates, Ticker } from '../types.ts';
 
@@ -90,13 +90,13 @@ function Actions({ data, latest }: { data: Aggregates; latest: string | null }) 
         </Box>
       )}
       {old.length > 0 && (
-        <TextButton color="assistive" size="small" onClick={() => setShowOld(!showOld)} sx={(t) => ({ margin: '16px 0 4px', color: metaColor(t) })}>
+        <TextButton color="assistive" size="small" onClick={() => setShowOld(!showOld)} sx={(t) => ({ ...TEXT_BUTTON_HIT, margin: '16px 0 4px', color: metaColor(t) })}>
           지난 액션 {old.length}개 {showOld ? '접기' : '보기'}
         </TextButton>
       )}
       {showOld && <ActionList items={old} done={done} onToggle={toggle} />}
       {completed.length > 0 && (
-        <TextButton color="assistive" size="small" onClick={() => setShowDone(!showDone)} sx={(t) => ({ margin: '16px 0 4px', display: 'flex', color: metaColor(t) })}>
+        <TextButton color="assistive" size="small" onClick={() => setShowDone(!showDone)} sx={(t) => ({ ...TEXT_BUTTON_HIT, margin: '16px 0 4px', display: 'flex', color: metaColor(t) })}>
           완료한 항목 {completed.length}개 {showDone ? '접기' : '보기'}
         </TextButton>
       )}

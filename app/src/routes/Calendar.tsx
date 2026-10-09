@@ -2,7 +2,7 @@ import { Box, Chip, IconButton, Typography } from '@wanteddev/wds';
 import { IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-import { CHIP_GAP, CHIP_HIT, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, longDate, metaColor } from '../layout.tsx';
+import { CHIP_GAP, CHIP_HIT, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, TOUCH_44, longDate, metaColor } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 import type { IndexDay } from '../types.ts';
 
@@ -54,19 +54,21 @@ export function Calendar() {
 
   return (
     <Page title="지난 브리핑">
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0 8px' }}>
-        <IconButton aria-label="이전 달" disabled={!canPrev} onClick={() => setMonth(shown.subtract(1, 'month').format('YYYY-MM-DD'))}>
+      {/* 아래 여백 10px + 필터 줄 위 여백 6px: 달 이동 버튼과 필터 칩의 눌리는 영역(44px)이 겹치지 않게 */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0 10px' }}>
+        <IconButton aria-label="이전 달" sx={TOUCH_44} disabled={!canPrev} onClick={() => setMonth(shown.subtract(1, 'month').format('YYYY-MM-DD'))}>
           <IconChevronLeft />
         </IconButton>
         <Typography as="h2" variant="headline1" weight="bold" aria-live="polite">
           {shown.year()}년 {shown.month() + 1}월
         </Typography>
-        <IconButton aria-label="다음 달" disabled={!canNext} onClick={() => setMonth(shown.add(1, 'month').format('YYYY-MM-DD'))}>
+        <IconButton aria-label="다음 달" sx={TOUCH_44} disabled={!canNext} onClick={() => setMonth(shown.add(1, 'month').format('YYYY-MM-DD'))}>
           <IconChevronRight />
         </IconButton>
       </Box>
 
-      <Box role="group" aria-label="카테고리 필터" sx={{ display: 'flex', gap: CHIP_GAP, overflowX: 'auto', paddingBottom: 12 }}>
+      {/* 가로 스크롤 줄은 세로로도 잘리므로, 칩의 눌리는 영역(위로 6px)이 들어갈 위 여백을 둔다 */}
+      <Box role="group" aria-label="카테고리 필터" sx={{ display: 'flex', gap: CHIP_GAP, overflowX: 'auto', padding: '6px 0 12px' }}>
         <Chip size="small" variant="outlined" sx={CHIP_HIT} active={!filter} onClick={() => setFilter(null)}>
           전체
         </Chip>
@@ -111,6 +113,8 @@ export function Calendar() {
                 border: 0,
                 borderRadius: '50%',
                 background: isSel ? t.semantic.primary.normal : 'transparent',
+                // 다크의 primary.normal(#3385FF) 위 흰 글자는 3.5:1이라 다크에서만 한 단계 진하게(#0066FF, 4.8:1). 라이트는 그대로
+                '[data-theme="dark"] &': isSel ? { background: t.semantic.primary.heavy } : undefined,
                 color: isSel ? t.semantic.static.white : enabled ? t.semantic.label.normal : t.semantic.label.disable,
                 fontFamily: 'inherit',
                 fontSize: '0.9375rem', // body2 크기. 버튼이라 Typography 대신 크기만 맞춘다

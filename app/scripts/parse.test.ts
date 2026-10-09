@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { aggregateTickers, dedupeEvents } from './build-data.ts';
+import { aggregateTickers, dedupeEvents, searchFileName } from './build-data.ts';
 import {
   categoryForFolder,
   extractActions,
@@ -216,5 +216,18 @@ describe('실제 저장소 전체 파일', () => {
     const news = files.filter((f) => !f.folder.endsWith('말씀'));
     const ok = news.filter(({ folder, file }) => !extractHighlights(readFileSync(join(ROOT, folder, file), 'utf8')).fallback);
     expect(ok.length / news.length).toBeGreaterThanOrEqual(0.95);
+  });
+});
+
+describe('searchFileName (재감사 P2: 월별 + 내용 해시)', () => {
+  it('내용이 같으면 이름도 같고, 내용이 바뀌면 이름이 바뀐다', () => {
+    const a = searchFileName('2026-09', '[{"id":"x"}]');
+    expect(a).toMatch(/^search-2026-09\.[0-9a-f]{8}\.json$/);
+    expect(searchFileName('2026-09', '[{"id":"x"}]')).toBe(a);
+    expect(searchFileName('2026-09', '[{"id":"y"}]')).not.toBe(a);
+  });
+
+  it('서비스 워커 캐시 규칙(vite.config.ts)과 이름 모양이 맞는다', () => {
+    expect(`/daily-news/data/${searchFileName('2026-10', '[]')}`).toMatch(/\/data\/search-[\d-]+\.[0-9a-f]{8}\.json$/);
   });
 });

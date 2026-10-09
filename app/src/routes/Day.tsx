@@ -130,6 +130,9 @@ export function Day() {
           size="small"
           sx={{
             '& [data-radix-scroll-area-content] > div': { paddingLeft: 16, paddingRight: 16 },
+            // 탭 높이 40 → 46px(.impeccable.md 원칙 4). 아래 2~3px은 Radix 가로 스크롤바가 덮어 실제 눌리는 높이는 약 44px.
+            // 스크롤 영역이 세로로 넘친 부분을 잘라 가상 요소로는 못 넓힌다. 12px은 Montage medium 탭의 값
+            '--wds-tab-padding-y': '12px',
           }}
         >
           {entries.map((e) => (

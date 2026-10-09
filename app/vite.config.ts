@@ -44,9 +44,16 @@ export default defineConfig({
             options: { cacheName: 'briefing-index', networkTimeoutSeconds: 3 },
           },
           {
-            urlPattern: ({ url }) => /\/data\/(days\/.+|search-.+)\.json$/.test(url.pathname),
+            urlPattern: ({ url }) => /\/data\/days\/.+\.json$/.test(url.pathname),
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'briefing-days', expiration: { maxEntries: 400 } },
+          },
+          // 검색 파일은 이름에 내용 해시가 있어 이름이 같으면 내용도 같다. 한 번 받으면 다시 묻지 않는다.
+          // 이번 달 파일은 매일 새 이름이 생기므로 오래된 것은 개수 제한으로 지운다(월 수 + 여유).
+          {
+            urlPattern: ({ url }) => /\/data\/search-[\d-]+\.[0-9a-f]{8}\.json$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'briefing-search', expiration: { maxEntries: 40 } },
           },
           // Google Fonts: CSS는 가끔 바뀌니 SWR, 글꼴 파일은 주소가 버전이라 CacheFirst
           {

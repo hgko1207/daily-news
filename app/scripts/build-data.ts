@@ -1,5 +1,6 @@
 // 저장소의 브리핑 md를 읽어 app/public/data/*.json을 만든다.
 // 구조 추출 실패는 경고만 남기고(exit 0), md 읽기 같은 진짜 오류에서만 실패한다.
+import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,8 +40,18 @@ function weekday(date: string): string {
   return WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()]!;
 }
 
-function half(date: string): string {
-  return `${date.slice(0, 4)}H${Number(date.slice(5, 7)) <= 6 ? 1 : 2}`;
+/**
+ * 검색 파일은 월별로 나누고 이름에 내용 해시를 붙인다(재감사 P2).
+ * 반기 파일 하나(100일치 1.4MB)는 매일 통째로 바뀌어 검색을 열 때마다 다시 받았다.
+ * 배포가 매일 모든 파일을 새로 쓰므로 이름이 같으면 서버 캐시 검증을 믿을 수 없다. 내용이 같으면 이름도 같게 해
+ * 서비스 워커가 지난달 파일을 다시 묻지 않게 한다(CacheFirst). 매일 바뀌는 건 이번 달 파일 하나다.
+ */
+export function searchFileName(month: string, json: string): string {
+  return `search-${month}.${createHash('sha256').update(json).digest('hex').slice(0, 8)}.json`;
+}
+
+function month(date: string): string {
+  return date.slice(0, 7);
 }
 
 function writeJson(path: string, data: unknown) {
@@ -54,7 +65,7 @@ function main() {
   const actions: Action[] = [];
   const events: EventRow[] = [];
   const rawTickers: { date: string; name: string; code?: string; text: string }[] = [];
-  const searchByHalf = new Map<string, SearchDoc[]>();
+  const searchByMonth = new Map<string, SearchDoc[]>();
 
   const folders = readdirSync(ROOT, { withFileTypes: true })
     .filter((d) => d.isDirectory() && FOLDER_RE.test(d.name))
@@ -82,9 +93,9 @@ function main() {
         events.push(...extractEvents(markdown, date));
         for (const t of extractTickers(markdown)) rawTickers.push({ date, ...t });
       }
-      const docs = searchByHalf.get(half(date)) ?? [];
+      const docs = searchByMonth.get(month(date)) ?? [];
       docs.push(...buildSearchDocs(markdown, date, category.slug));
-      searchByHalf.set(half(date), docs);
+      searchByMonth.set(month(date), docs);
     }
   }
 
@@ -108,12 +119,15 @@ function main() {
     };
   });
 
-  // search-YYYYH[12].json
+  // search-YYYY-MM.<해시>.json
   const searchFiles: string[] = [];
-  for (const [key, docs] of [...searchByHalf.entries()].sort()) {
-    const name = `search-${key}.json`;
+  for (const [key, docs] of [...searchByMonth.entries()].sort()) {
+    // 같은 날짜 안은 폴더 순서(국내경제→…→말씀)를 유지한다. 정렬은 안정적이고 읽는 순서가 고정이라 해시도 매번 같다
     docs.sort((a, b) => b.date.localeCompare(a.date));
-    writeJson(join(OUT, name), docs);
+    const json = JSON.stringify(docs);
+    const name = searchFileName(key, json);
+    mkdirSync(OUT, { recursive: true });
+    writeFileSync(join(OUT, name), json);
     searchFiles.push(name);
   }
 

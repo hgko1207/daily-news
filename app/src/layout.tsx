@@ -17,15 +17,25 @@ import {
 } from '@wanteddev/wds';
 import { IconArrowLeft, IconCalendar, IconChevronRightSmall, IconHome, IconList, IconSearch, IconSetting } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { dotColor } from './categories.ts';
 
 /** 터치 영역 최소 44×44(Design Audit F8). */
 // 레이아웃 크기는 그대로 두고(음수 여백) 눌리는 영역만 44px로. 그냥 키우면 헤더 아이콘이 아래로 밀린다.
 export const TOUCH_44 = { minWidth: 44, minHeight: 44, margin: -10 };
-/** 칩은 보이는 크기를 유지하고 눌리는 영역만 위아래로 넓혀 44px로 만든다(F8). */
-export const CHIP_HIT = { position: "relative" as const, "&::after": { content: "\"\"", position: "absolute" as const, left: 0, right: 0, top: -6, bottom: -6 } };
+/**
+ * 보이는 크기는 그대로 두고 눌리는 영역만 위아래로 넓혀 44px로 만든다(F8). h는 요소의 실제 높이.
+ * 가상 요소(::after)를 쓰므로 ::after를 이미 쓰는 컴포넌트(세그먼트 등)에는 쓰지 않는다.
+ */
+export const hitY = (h: number) => {
+  const pad = -(44 - h) / 2;
+  return { position: 'relative' as const, '&::after': { content: '""', position: 'absolute' as const, left: 0, right: 0, top: pad, bottom: pad } };
+};
+/** small 칩·small 버튼(32px) */
+export const CHIP_HIT = hitY(32);
+/** small 텍스트 버튼(28px) */
+export const TEXT_BUTTON_HIT = hitY(28);
 
 /** 섹션 제목이 고정 헤더 아래에서 멈추도록 하는 여백(헤더 높이 + 12px). */
 export const SCROLL_MARGIN = 'calc(var(--header-h, 145px) + 12px)';
@@ -67,7 +77,7 @@ export const SERIF_TYPE = {
   /** 출근·점심·퇴근 기온: title3 크기(24px) */
   temperature: { fontFamily: SERIF, fontSize: '1.5rem', lineHeight: 1.2 },
   /** 말씀 본문(오늘 탭·상세 공통): headline1 크기(18px), 읽기 행간 1.8 */
-  word: { fontFamily: SERIF, fontSize: '1.125rem', fontWeight: 500, lineHeight: 1.8, letterSpacing: '-0.01em', wordBreak: 'keep-all' as const },
+  word: { fontFamily: SERIF, fontSize: '1.125rem', fontWeight: 500, lineHeight: 1.8, letterSpacing: '-0.01em' },
   /** 지면 번호 01~05: 옆 카테고리 줄(20px)과 높이를 맞춘다 */
   issueIndex: { fontFamily: SERIF, fontVariantNumeric: 'tabular-nums', lineHeight: '20px' },
 };
@@ -75,7 +85,6 @@ export const SERIF_TYPE = {
 /** 색 점과 라벨 사이(카테고리 줄), 칩과 칩 사이. 역할마다 같은 값을 쓰도록 이름을 붙인다(Design Audit F14). */
 export const DOT_LABEL_GAP = 6;
 export const CHIP_GAP = 6;
-const BOTTOM_NAV_HEIGHT = 64;
 
 // 가로로 돌린 iPhone에서 노치·둥근 모서리 아래로 내용이 들어가지 않게(viewport-fit=cover, Technical Audit P3).
 // 헤더·하단 탭은 배경은 끝까지 칠하고 내용만 안쪽으로, 본문은 16px과 안전 영역 중 큰 쪽.
@@ -156,8 +165,20 @@ interface PageProps {
   children: ReactNode;
 }
 
-function syncHeaderHeight(el: HTMLElement | null) {
-  if (el) document.documentElement.style.setProperty('--header-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+function setHeightVar(name: string, el: Element | null) {
+  if (el) document.documentElement.style.setProperty(name, `${Math.round(el.getBoundingClientRect().height)}px`);
+}
+
+/** 요소 높이를 CSS 변수로 내보내고 크기가 바뀌면 따라간다(고정 헤더 --header-h, 하단 탭 --nav-h). */
+function useHeightVar(ref: RefObject<HTMLElement | null>, name: string) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setHeightVar(name, el);
+    const ro = new ResizeObserver(() => setHeightVar(name, el));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, name]);
 }
 
 /**
@@ -166,7 +187,7 @@ function syncHeaderHeight(el: HTMLElement | null) {
  * CSS scroll-behavior는 JS의 'smooth'를 막지 못해 동작 줄이기 설정도 여기서 본다(Technical Audit P3).
  */
 export function scrollToSection(id: string, smooth = false) {
-  syncHeaderHeight(document.querySelector('header'));
+  setHeightVar('--header-h', document.querySelector('header'));
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
   document.getElementById(id)?.scrollIntoView({ behavior: smooth && !reduce ? 'smooth' : 'auto' });
 }
@@ -175,14 +196,11 @@ export function Page({ title, leading, trailing, toolbar, search = true, divider
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
-  // 고정 헤더의 실제 높이를 --header-h로 내보내 섹션 이동 시 제목이 가려지지 않게 한다(Design Audit F5).
-  useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => syncHeaderHeight(el));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const navRef = useRef<HTMLElement>(null);
+  // 고정 헤더의 실제 높이를 내보내 섹션 이동 시 제목이 가려지지 않게 한다(Design Audit F5).
+  useHeightVar(headerRef, '--header-h');
+  // 하단 탭은 기기 글자 크기에 따라 높이가 달라진다. 본문 아래 여백이 그 높이를 따라가게 한다.
+  useHeightVar(navRef, '--nav-h');
   // Montage TopNavigation은 제목을 h2로 고정해 그린다. 화면마다 h1이 없던 문제를 태그를 두 번 두지 않고
   // 화면 제목 단계로 올려 푼다(Technical Audit P2). 제목 요소가 다시 그려질 수 있어 매 렌더 확인한다.
   useLayoutEffect(() => {
@@ -231,12 +249,17 @@ export function Page({ title, leading, trailing, toolbar, search = true, divider
         sx={{
           maxWidth: CONTENT_MAX,
           margin: '0 auto',
-          padding: `0 ${GUTTER_RIGHT} calc(${BOTTOM_NAV_HEIGHT + 24}px + env(safe-area-inset-bottom)) ${GUTTER_LEFT}`,
+          // --nav-h는 하단 탭의 실제 높이(아래 안전 영역 포함). 재기 전에는 기본 높이 56px + 안전 영역
+          padding: `0 ${GUTTER_RIGHT} calc(var(--nav-h, calc(56px + env(safe-area-inset-bottom))) + 24px) ${GUTTER_LEFT}`,
+          // 헤더와 같은 이유: Montage 눌림 표시(달력 달 이동 버튼 등)가 터치 영역 밖으로 나와 페이지가 옆으로 밀리지 않게.
+          // clip은 스크롤 영역을 만들지 않아 안쪽 sticky(모아보기 날짜 제목)에 영향이 없다
+          overflowX: 'clip',
         }}
       >
         {children}
       </Box>
       <Box
+        ref={navRef}
         as="nav"
         aria-label="주요 메뉴"
         sx={(t) => ({
@@ -256,7 +279,14 @@ export function Page({ title, leading, trailing, toolbar, search = true, divider
           <BottomNavigation
             value={currentTab(pathname)}
             onValueChange={(v) => navigate(v)}
-            sx={{ '[wds-component="bottom-navigation-item"] span': { fontSize: '0.75rem', lineHeight: '1rem' } }}
+            sx={{
+              '[wds-component="bottom-navigation-item"] span': { fontSize: '0.75rem', lineHeight: '1rem' },
+              // Montage는 높이를 56px로 고정해 기기 글자를 키우면 "지난 브리핑"이 두 줄이 되며 잘렸다(재감사 P2, WCAG 1.4.4).
+              // 고정을 풀고, 항목 아래 여백을 4px로 둬 기본 글자 크기에서는 예전과 같은 56px(항목이 5px 넘치던 모양 그대로)
+              height: 'auto',
+              minHeight: 56,
+              '[wds-component="bottom-navigation-item"]': { paddingBottom: 4 },
+            }}
           >
             {TABS.map((t) => (
               <BottomNavigationItem key={t.value} value={t.value} label={t.label} icon={t.icon} />

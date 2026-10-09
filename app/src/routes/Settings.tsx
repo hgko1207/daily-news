@@ -2,7 +2,7 @@ import { Box, Button, Divider, SectionHeader, SegmentedControl, SegmentedControl
 import { IconCircleCheckFill, IconCopy, IconRefresh } from '@wanteddev/wds-icon';
 import { useEffect, useState, type ReactNode } from 'react';
 import { canPromptInstall, detectPlatform, isStandalone, onInstallPromptChange, promptInstall, type InstallPlatform } from '../install.ts';
-import { Caption, Page, SCROLL_MARGIN, kstTime, longDate } from '../layout.tsx';
+import { CHIP_HIT, Caption, Page, SCROLL_MARGIN, TEXT_BUTTON_HIT, kstTime, longDate } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 
 const REPO_URL = 'https://github.com/hgko1207/daily-news';
@@ -79,7 +79,7 @@ function InstallGuide({ platform }: { platform: InstallPlatform }) {
             Safari로 열어야 홈 화면에 추가할 수 있어요
           </Typography>
           <Caption>카카오톡·Chrome 등에서 열었다면 주소를 복사해 Safari에 붙여넣어 주세요.</Caption>
-          <Button variant="outlined" color="assistive" size="small" leadingContent={<IconCopy />} onClick={() => void copy()} sx={{ marginTop: 8 }}>
+          <Button variant="outlined" color="assistive" size="small" leadingContent={<IconCopy />} onClick={() => void copy()} sx={{ ...CHIP_HIT, marginTop: 8 }}>
             주소 복사
           </Button>
           <Box sx={{ marginTop: 16 }}>
@@ -165,7 +165,7 @@ export function Settings() {
                 await reloadIndex();
                 setRefreshing(false);
               }}
-              sx={{ marginTop: 12 }}
+              sx={{ ...CHIP_HIT, marginTop: 12 }}
             >
               새로고침
             </Button>
@@ -180,7 +180,7 @@ export function Settings() {
         '정보',
         <>
           <Caption>Claude가 매일 아침 정리하는 개인 브리핑입니다. 정보 제공용이며 투자 조언이 아닙니다.</Caption>
-          <TextButton as="a" href={REPO_URL} target="_blank" rel="noopener noreferrer" size="small" sx={{ marginTop: 8 }}>
+          <TextButton as="a" href={REPO_URL} target="_blank" rel="noopener noreferrer" size="small" sx={{ ...TEXT_BUTTON_HIT, marginTop: 8 }}>
             GitHub 저장소
           </TextButton>
           <Caption>버전 {__APP_VERSION__}</Caption>
