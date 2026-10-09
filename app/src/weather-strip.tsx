@@ -1,7 +1,7 @@
 import { Box, Skeleton, Typography } from '@wanteddev/wds';
 import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SERIF, kstTime } from './layout.tsx';
+import { SERIF_TYPE, SR_ONLY, kstTime, metaColor } from './layout.tsx';
 import { useStore } from './store.tsx';
 import {
   RAIN_SHOW,
@@ -138,7 +138,7 @@ export function WeatherStrip() {
           </Typography>
           <IconChevronRightSmall aria-hidden />
         </InlineAction>
-        <Typography as="p" variant="label2" color="semantic.label.alternative" sx={{ display: 'block', marginTop: 4 }}>
+        <Typography as="p" variant="label2" sx={(t) => ({ display: 'block', marginTop: 4, color: metaColor(t) })}>
           위치는 날씨를 찾는 데만 쓰고, 이 기기에만 저장해요
         </Typography>
       </Box>
@@ -169,12 +169,12 @@ export function WeatherStrip() {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', columnGap: 8, rowGap: 2 }}>
         <Typography as="p" variant="label2" weight="bold" color="semantic.label.normal">
           {place.name}
-          <Typography as="span" variant="label2" weight="medium" color="semantic.label.alternative">
+          <Typography as="span" variant="label2" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
             {` · ${day.tomorrow ? '내일 ' : ''}${day.sky} · 비 ${day.rain}%`}
           </Typography>
         </Typography>
         {day.advice && (
-          <Typography as="p" variant="caption1" weight="medium" color="semantic.label.alternative">
+          <Typography as="p" variant="caption1" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
             {day.advice}
           </Typography>
         )}
@@ -194,15 +194,18 @@ export function WeatherStrip() {
           <Box
             as="li"
             key={s.label}
-            aria-label={`${s.label} ${s.hour}시 ${s.temp}도 ${s.sky}${s.rain >= RAIN_SHOW ? ` 비 ${s.rain}%` : ''}`}
             sx={(t) => ({
               padding: i === 0 ? '10px 0' : '10px 0 10px 12px',
               borderLeft: i === 0 ? 'none' : `1px solid ${t.semantic.line.normal.normal}`,
             })}
           >
+            {/* li의 aria-label은 스크린 리더마다 지원이 달라, 읽을 문장을 숨긴 글자로 둔다(Technical Audit P3) */}
+            <Box as="span" sx={SR_ONLY}>
+              {`${s.label} ${s.hour}시 ${s.temp}도 ${s.sky}${s.rain >= RAIN_SHOW ? ` 비 ${s.rain}%` : ''}`}
+            </Box>
             <Typography as="span" aria-hidden variant="caption1" weight="bold" color="semantic.label.neutral" sx={{ display: 'block' }}>
               {s.label}{' '}
-              <Typography as="span" variant="caption1" weight="medium" color="semantic.label.alternative">
+              <Typography as="span" variant="caption1" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
                 {s.hour}시
               </Typography>
             </Typography>
@@ -212,11 +215,11 @@ export function WeatherStrip() {
                 variant="title3"
                 weight="bold"
                 color="semantic.label.normal"
-                sx={{ fontFamily: SERIF, fontSize: 24, lineHeight: 1.2 }}
+                sx={SERIF_TYPE.temperature}
               >
                 {s.temp}°
               </Typography>
-              <Typography as="span" variant="caption1" color="semantic.label.alternative">
+              <Typography as="span" variant="caption1" sx={(t) => ({ color: metaColor(t) })}>
                 {s.rain >= RAIN_SHOW ? `비 ${s.rain}%` : s.sky}
               </Typography>
             </Box>
@@ -224,7 +227,7 @@ export function WeatherStrip() {
         ))}
       </Box>
       {(note || stale) && (
-        <Typography as="p" variant="caption1" color="semantic.label.alternative" sx={{ display: 'block', marginTop: 6 }}>
+        <Typography as="p" variant="caption1" sx={(t) => ({ display: 'block', marginTop: 6, color: metaColor(t) })}>
           {note ?? `${online ? '' : '오프라인 · '}${kstTime(saved.forecast!.fetchedAt)} 기준`}
           {note && (
             <>

@@ -1,10 +1,9 @@
-import { Box, Checkbox, ListCell, SegmentedControl, SegmentedControlItem, TextButton, Typography } from '@wanteddev/wds';
-import { IconChevronRightSmall } from '@wanteddev/wds-icon';
+import { Box, Checkbox, SegmentedControl, SegmentedControlItem, TextButton, Typography } from '@wanteddev/wds';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { CATEGORIES } from '../../scripts/parse.ts';
-import { BackButton, Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate, shortDate, useScrollRestore } from '../layout.tsx';
+import { BackButton, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, longDate, metaColor, shortDate, useScrollRestore } from '../layout.tsx';
 import { useLoad, useStore } from '../store.tsx';
 import type { Action, Aggregates, Ticker } from '../types.ts';
 
@@ -47,7 +46,7 @@ export function Collect() {
         ) : ticker ? (
           <TickerTimeline ticker={load.data.tickers.find((t) => t.key === ticker)} />
         ) : (
-          <Tickers tickers={load.data.tickers} onOpen={(key) => setParams({ tab: 'tickers', t: key })} />
+          <Tickers tickers={load.data.tickers} />
         ))}
     </Page>
   );
@@ -91,13 +90,13 @@ function Actions({ data, latest }: { data: Aggregates; latest: string | null }) 
         </Box>
       )}
       {old.length > 0 && (
-        <TextButton color="assistive" size="small" onClick={() => setShowOld(!showOld)} sx={{ margin: '16px 0 4px' }}>
+        <TextButton color="assistive" size="small" onClick={() => setShowOld(!showOld)} sx={(t) => ({ margin: '16px 0 4px', color: metaColor(t) })}>
           지난 액션 {old.length}개 {showOld ? '접기' : '보기'}
         </TextButton>
       )}
       {showOld && <ActionList items={old} done={done} onToggle={toggle} />}
       {completed.length > 0 && (
-        <TextButton color="assistive" size="small" onClick={() => setShowDone(!showDone)} sx={{ margin: '16px 0 4px', display: 'flex' }}>
+        <TextButton color="assistive" size="small" onClick={() => setShowDone(!showDone)} sx={(t) => ({ margin: '16px 0 4px', display: 'flex', color: metaColor(t) })}>
           완료한 항목 {completed.length}개 {showDone ? '접기' : '보기'}
         </TextButton>
       )}
@@ -125,7 +124,7 @@ function ActionList({ items, done, onToggle }: { items: Action[]; done: Set<stri
               background: t.semantic.background.normal.normal,
             })}
           >
-            <Typography as="h3" variant="label1" weight="bold" color="semantic.label.normal">
+            <Typography as="h2" variant="label1" weight="bold" color="semantic.label.normal">
               {longDate(date)}
             </Typography>
           </Box>
@@ -150,12 +149,11 @@ function ActionItems({ items, done, onToggle }: { items: Action[]; done: Set<str
             <Box as="label" htmlFor={id} sx={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', minWidth: 0 }}>
               <Typography
                 variant="body2-reading"
-                color={checked ? 'semantic.label.alternative' : 'semantic.label.normal'}
-                sx={{ textDecoration: checked ? 'line-through' : 'none' }}
+                sx={(t) => ({ textDecoration: checked ? 'line-through' : 'none', color: checked ? metaColor(t) : t.semantic.label.normal })}
               >
                 {a.text}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP }}>
                 <CategoryDot slug={a.slug} />
                 <Caption>{LABEL.get(a.slug) ?? a.slug}</Caption>
               </Box>
@@ -168,28 +166,17 @@ function ActionItems({ items, done, onToggle }: { items: Action[]; done: Set<str
 }
 
 /** 종목(D17): 최근 언급일 순, 행에 "최근 M/D · N회". */
-function Tickers({ tickers, onOpen }: { tickers: Ticker[]; onOpen: (key: string) => void }) {
+function Tickers({ tickers }: { tickers: Ticker[] }) {
   if (!tickers.length) return <ErrorView description="아직 모인 종목이 없어요" />;
   return (
     <Box as="ul" sx={{ listStyle: 'none', margin: 0, padding: '8px 0 0' }}>
       {tickers.map((t) => (
-        <ListCell
-          key={t.key}
-          as="li"
-          divider
-          fillWidth
-          role="link"
-          tabIndex={0}
-          onClick={() => onOpen(t.key)}
-          onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && onOpen(t.key)}
-          trailingContent={<IconChevronRightSmall aria-hidden />}
-          sx={{ cursor: 'pointer', minHeight: 44 }}
-        >
+        <LinkCell key={t.key} to={`/collect?${new URLSearchParams({ tab: 'tickers', t: t.key })}`} chevron>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography variant="body1" weight="bold">
               {t.name}
               {t.code && (
-                <Typography as="span" variant="label2" color="semantic.label.alternative" sx={{ marginLeft: 6 }}>
+                <Typography as="span" variant="label2" sx={(t) => ({ marginLeft: 6, color: metaColor(t) })}>
                   {t.code}
                 </Typography>
               )}
@@ -198,14 +185,13 @@ function Tickers({ tickers, onOpen }: { tickers: Ticker[]; onOpen: (key: string)
               최근 {shortDate(t.lastDate)} · {t.count}회
             </Caption>
           </Box>
-        </ListCell>
+        </LinkCell>
       ))}
     </Box>
   );
 }
 
 function TickerTimeline({ ticker }: { ticker?: Ticker }) {
-  const navigate = useNavigate();
   if (!ticker) return <ErrorView description="종목을 찾지 못했어요" />;
   return (
     <Box sx={{ paddingTop: 16 }}>
@@ -217,22 +203,12 @@ function TickerTimeline({ ticker }: { ticker?: Ticker }) {
       </Caption>
       <Box as="ol" sx={{ listStyle: 'none', margin: '16px 0 0', padding: 0 }}>
         {ticker.mentions.map((m, i) => (
-          <ListCell
-            key={`${m.date}-${i}`}
-            as="li"
-            divider
-            fillWidth
-            role="link"
-            tabIndex={0}
-            onClick={() => navigate(`/day/${m.date}/invest`)}
-            onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate(`/day/${m.date}/invest`)}
-            sx={{ cursor: 'pointer' }}
-          >
+          <LinkCell key={`${m.date}-${i}`} to={`/day/${m.date}/invest`}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <Caption>{shortDate(m.date)}</Caption>
               <Typography variant="body2-reading">{m.text || '언급됨'}</Typography>
             </Box>
-          </ListCell>
+          </LinkCell>
         ))}
       </Box>
     </Box>

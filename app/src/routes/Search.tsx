@@ -1,8 +1,8 @@
-import { Box, Chip, ListCell, SearchField, Typography } from '@wanteddev/wds';
+import { Box, Chip, SearchField, Typography } from '@wanteddev/wds';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
-import { BackButton, CHIP_HIT, Caption, CategoryDot, ErrorView, Page, shortDate } from '../layout.tsx';
-import { sectionId } from '../markdown.tsx';
+import { useSearchParams } from 'react-router';
+import { BackButton, CHIP_GAP, CHIP_HIT, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, Page, shortDate } from '../layout.tsx';
+import { sectionId } from '../section.ts';
 import { highlightSegments, searchDocs, searchTerms } from '../search.ts';
 import { useLoad, useStore } from '../store.tsx';
 
@@ -14,7 +14,6 @@ function snippet(text: string, heading: string): string {
 }
 
 export function Search() {
-  const navigate = useNavigate();
   const { index, searchDocs: loadDocs, aggregates, online } = useStore();
   const [params, setParams] = useSearchParams();
   const [input, setInput] = useState(params.get('q') ?? '');
@@ -43,7 +42,7 @@ export function Search() {
   const recentTickers = agg.status === 'ready' ? agg.data.tickers.slice(0, 8) : [];
 
   const chips = recentTickers.length > 0 && (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 12 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: CHIP_GAP, paddingTop: 12 }}>
       {recentTickers.map((t) => (
         <Chip key={t.key} size="small" variant="outlined" sx={CHIP_HIT} onClick={() => setInput(t.name)}>
           {t.name}
@@ -106,19 +105,9 @@ export function Search() {
           </Box>
           <Box as="ul" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {results.map((r) => (
-              <ListCell
-                key={r.id}
-                as="li"
-                divider
-                fillWidth
-                role="link"
-                tabIndex={0}
-                onClick={() => navigate(`/day/${r.date}/${r.slug}#${sectionId(r.heading)}`)}
-                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate(`/day/${r.date}/${r.slug}#${sectionId(r.heading)}`)}
-                sx={{ cursor: 'pointer' }}
-              >
+              <LinkCell key={r.id} to={`/day/${r.date}/${r.slug}#${sectionId(r.heading)}`}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP }}>
                     <CategoryDot slug={r.slug} />
                     <Caption>
                       {shortDate(r.date)} · {labels.get(r.slug) ?? r.slug}
@@ -143,7 +132,7 @@ export function Search() {
                     )}
                   </Typography>
                 </Box>
-              </ListCell>
+              </LinkCell>
             ))}
           </Box>
         </>

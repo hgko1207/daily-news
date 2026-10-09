@@ -2,8 +2,9 @@ import { Box, Chip, Skeleton, Tab, TabList, TabListItem, TopNavigationButton, Ty
 import { IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { BackButton, CHIP_HIT, ErrorView, Page, TOUCH_44, longDate, shortDate, useScrollRestore } from '../layout.tsx';
-import { Markdown, idFromHash, sectionId } from '../markdown.tsx';
+import { BackButton, CHIP_GAP, CHIP_HIT, ErrorView, Page, RightFade, TOUCH_44, longDate, scrollToSection, shortDate, useMoreToRight, useScrollRestore } from '../layout.tsx';
+import { Markdown } from '../markdown.tsx';
+import { idFromHash, sectionId } from '../section.ts';
 import { useLoad, useStore } from '../store.tsx';
 
 const SWIPE_MIN_X = 60;
@@ -24,11 +25,12 @@ export function Day() {
   const entries = load.status === 'ready' ? load.data.entries : [];
   const active = entries.find((e) => e.slug === slug) ?? entries[0];
   useScrollRestore(`day:${date}:${active?.slug ?? ''}`, load.status === 'ready');
+  const [chipsRef, chipsMore] = useMoreToRight<HTMLDivElement>(undefined, active?.slug);
 
   // 검색 결과에서 들어오면 해당 섹션으로 이동
   const { hash } = useLocation();
   useEffect(() => {
-    if (load.status === 'ready' && hash) document.getElementById(idFromHash(hash))?.scrollIntoView();
+    if (load.status === 'ready' && hash) scrollToSection(idFromHash(hash));
   }, [load.status, hash, active?.slug]);
 
   // 선택된 카테고리 탭이 가로 목록 밖에 있으면 보이도록 옮긴다(Design Audit F10)
@@ -55,6 +57,8 @@ export function Day() {
 
   const header = {
     leading: <BackButton fallback="/" />,
+    // 제목 안에 ‹ › 버튼이 있어 "이전 날짜 10/8 다음 날짜"로 읽히던 문제(Technical Audit P2)
+    heading: Number.isNaN(Date.parse(date)) ? '브리핑' : `${longDate(date)} 브리핑`,
     title: (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <TopNavigationButton
@@ -136,22 +140,29 @@ export function Day() {
         </TabList>
       </Tab>
       {showOutline && (
-        <Box
-          data-no-swipe
-          aria-label="섹션 바로가기"
-          sx={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '8px 16px', scrollbarWidth: 'none' }}
-        >
-          {active.outline.map((h) => (
-            <Chip
-              sx={CHIP_HIT}
-              key={h}
-              size="small"
-              variant="outlined"
-              onClick={() => document.getElementById(sectionId(h))?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              {chipLabel(h)}
-            </Chip>
-          ))}
+        // 스크롤바를 숨긴 줄이라 오른쪽에 칩이 더 있으면 흐림으로 알린다. 마우스가 있는 기기에는 얇은 스크롤바도 둔다(Technical Audit P3).
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            ref={chipsRef}
+            data-no-swipe
+            role="group"
+            aria-label="섹션 바로가기"
+            sx={{
+              display: 'flex',
+              gap: CHIP_GAP,
+              overflowX: 'auto',
+              padding: '8px 16px',
+              scrollbarWidth: 'none',
+              '@media (hover: hover) and (pointer: fine)': { scrollbarWidth: 'thin' },
+            }}
+          >
+            {active.outline.map((h) => (
+              <Chip sx={CHIP_HIT} key={h} size="small" variant="outlined" onClick={() => scrollToSection(sectionId(h), true)}>
+                {chipLabel(h)}
+              </Chip>
+            ))}
+          </Box>
+          {chipsMore && <RightFade />}
         </Box>
       )}
     </Box>
@@ -185,7 +196,7 @@ export function Day() {
   );
 }
 
-/** 헤딩에서 숫자 접두어·괄호를 빼고 앞 6자(D9). */
+/** 섹션 칩 라벨 최대 글자 수(설계 D9는 6자였으나 F13에서 12자로 늘림). */
 const CHIP_MAX = 12;
 
 /**

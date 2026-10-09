@@ -3,23 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0066FF" />
+    <!--
+      다크 모드 첫 화면 흰 번쩍임 방지(Technical Audit P2). JS가 뜨기 전이라 토큰을 못 쓰므로
+      Montage background.normal.normal 값(#FFFFFF / #1B1C1E)을 그대로 적는다. 앱이 뜨면 App.tsx가 이어받는다.
+    -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1B1C1E" media="(prefers-color-scheme: dark)" />
+    <style>
+      html { background: #ffffff; }
+      html[data-theme='dark'] { background: #1b1c1e; }
+    </style>
+    <script>
+      // 설정 화면에서 고른 테마(Montage/next-themes, localStorage "theme")를 그리기 전에 먼저 붙인다.
+      try {
+        var t = localStorage.getItem('theme');
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.style.colorScheme = t;
+      } catch (e) {}
+    </script>
     <meta name="description" content="Claude가 매일 아침 정리하는 개인 브리핑" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="브리핑" />
     <link rel="icon" type="image/svg+xml" href="/daily-news/icons/favicon.svg" />
     <link rel="apple-touch-icon" href="/daily-news/icons/apple-touch-icon.png" />
+    <!--
+      글꼴 CSS는 렌더링을 막지 않게 preload로 받고 다 받으면 stylesheet로 바꾼다(Technical Audit P2).
+      막는 stylesheet면 앱 JS가 이 CSS를 기다린다. Google Fonts는 첫 방문 때 새 연결로 약 0.4초라 JS보다 늦을 수 있고,
+      닿지 않으면 앱이 시작하지 않는다. 두 CSS 모두 font-display: swap이라 글꼴이 바뀌는 시점은 전과 같다.
+      media="print" 방식은 받는 우선순위가 낮아져 쓰지 않는다.
+    -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
-      rel="stylesheet"
+      rel="preload"
+      as="style"
       crossorigin
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
     <!-- 제호·지면 번호·말씀용 세리프(.impeccable.md). 한글은 Google Fonts가 글자 범위별로 쪼개 필요한 조각만 받는다. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&display=swap" />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
     <title>데일리 브리핑</title>
   </head>
   <body>

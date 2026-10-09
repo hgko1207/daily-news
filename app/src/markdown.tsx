@@ -1,27 +1,10 @@
 import { Box, Divider, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, Typography } from '@wanteddev/wds';
-import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
-import { SCROLL_MARGIN, SERIF } from './layout.tsx';
-
-/**
- * 섹션 바로가기(D9)·검색 결과 이동과 헤딩 id가 같은 규칙을 쓰도록 한 곳에서 만든다.
- * id는 원문 그대로 둔다. URL 해시는 브라우저가 인코딩하므로 읽는 쪽에서 디코딩해 비교한다(F1).
- */
-export function sectionId(heading: string): string {
-  return `sec-${heading.trim().replace(/\s+/g, '-')}`;
-}
-
-/** URL 해시(#sec-…)에서 섹션 id를 꺼낸다. 잘못된 인코딩이면 원문을 그대로 쓴다. */
-export function idFromHash(hash: string): string {
-  const raw = hash.replace(/^#/, '');
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
-}
+import { RightFade, SCROLL_MARGIN, SERIF_TYPE, useMoreToRight } from './layout.tsx';
+import { sectionId } from './section.ts';
 
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -152,21 +135,7 @@ const components: Components = {
  * 칸을 억지로 좁히지 않고, 오른쪽에 더 있으면 가장자리를 흐리게 표시한다(Design Audit F11).
  */
 function TableScroll({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [more, setMore] = useState(false);
-  useEffect(() => {
-    const vp = ref.current?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
-    if (!vp) return;
-    const check = () => setMore(vp.scrollLeft + vp.clientWidth < vp.scrollWidth - 4);
-    check();
-    vp.addEventListener("scroll", check, { passive: true });
-    const ro = new ResizeObserver(check);
-    ro.observe(vp);
-    return () => {
-      vp.removeEventListener("scroll", check);
-      ro.disconnect();
-    };
-  }, []);
+  const [ref, more] = useMoreToRight<HTMLDivElement>((node) => node.querySelector('[data-radix-scroll-area-viewport]'));
   return (
     <Box ref={ref} data-no-swipe sx={{ position: "relative", margin: "0 0 16px" }}>
       <Table
@@ -183,21 +152,7 @@ function TableScroll({ children }: { children: ReactNode }) {
       >
         {children}
       </Table>
-      {more && (
-        <Box
-          aria-hidden
-          sx={(t) => ({
-            position: "absolute",
-            top: 1,
-            right: 1,
-            bottom: 1,
-            width: 32,
-            pointerEvents: "none",
-            borderRadius: "0 12px 12px 0",
-            background: `linear-gradient(to right, transparent, ${t.semantic.background.normal.normal})`,
-          })}
-        />
-      )}
+      {more && <RightFade inset={1} radius={12} />}
     </Box>
   );
 }
@@ -213,7 +168,7 @@ const wordComponents: Components = {
         padding: '16px 0',
         borderTop: `1px solid ${t.semantic.line.normal.normal}`,
         borderBottom: `1px solid ${t.semantic.line.normal.normal}`,
-        '& p': { fontFamily: SERIF, fontSize: 18, fontWeight: 500, lineHeight: 1.8, letterSpacing: '-0.01em', wordBreak: 'keep-all' },
+        '& p': SERIF_TYPE.word,
         '& p:last-child': { marginBottom: 0 },
       })}
     >

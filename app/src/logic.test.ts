@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchAggregates, fetchDay, fetchIndex, hasNewBriefing, issueNumber, kstNow, todayView } from './data.ts';
 import { detectPlatform } from './install.ts';
-import { idFromHash, sectionId } from './markdown.tsx';
+import { idFromHash, sectionId } from './section.ts';
 import { highlightSegments, searchDocs } from './search.ts';
 import type { IndexData, SearchDoc } from './types.ts';
 import { advice, skyLabel, summarize, type Forecast } from './weather.ts';

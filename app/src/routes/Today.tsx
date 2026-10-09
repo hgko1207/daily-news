@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { issueNumber, kstNow, todayView } from '../data.ts';
 import { isStandalone } from '../install.ts';
-import { CHIP_HIT, CategoryDot, ErrorView, ListSkeleton, Page, SERIF, kstTime, longDate, useScrollRestore } from '../layout.tsx';
+import { CHIP_HIT, CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 import { WeatherStrip } from '../weather-strip.tsx';
 
@@ -34,10 +34,10 @@ function Masthead({ meta }: { meta?: ReactNode }) {
     <Box sx={{ paddingTop: 4 }}>
       <Typography
         as="h1"
-        variant="title2"
+        variant="display3"
         weight="bold"
         color="semantic.label.normal"
-        sx={{ display: 'block', fontFamily: SERIF, fontSize: 36, lineHeight: 1.15, letterSpacing: '-0.03em' }}
+        sx={{ display: 'block', ...SERIF_TYPE.masthead }}
       >
         데일리 브리핑
       </Typography>
@@ -56,13 +56,22 @@ function Masthead({ meta }: { meta?: ReactNode }) {
   );
 }
 
+/** "오늘의 지면"·"오늘의 말씀"처럼 지면을 여는 작은 머리글. 넓은 자간으로 본문과 구분한다. */
+function SectionLabel({ as, children, sx }: { as: 'h2' | 'p'; children: ReactNode; sx?: Record<string, unknown> }) {
+  return (
+    <Typography as={as} variant="caption1" weight="bold" sx={(t) => ({ display: 'block', letterSpacing: '0.1em', color: metaColor(t), ...sx })}>
+      {children}
+    </Typography>
+  );
+}
+
 function MetaLine({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 12, paddingTop: 8, fontVariantNumeric: 'tabular-nums' }}>
-      <Typography variant="caption1" weight="medium" color="semantic.label.alternative">
+      <Typography variant="caption1" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
         {left}
       </Typography>
-      <Typography variant="caption1" weight="medium" color="semantic.label.alternative" sx={{ textAlign: 'right' }}>
+      <Typography variant="caption1" weight="medium" sx={(t) => ({ color: metaColor(t), textAlign: 'right' })}>
         {right}
       </Typography>
     </Box>
@@ -120,7 +129,7 @@ export function Today() {
 
   const dateLine = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 3 }}>
-      <Typography variant="label2" weight="medium" color="semantic.label.alternative">
+      <Typography variant="label2" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
         {longDate(day.date)}
       </Typography>
       {/* 오늘이 아닌 브리핑임을 날짜 옆에서 바로 알 수 있게(Design Audit F6) */}
@@ -168,7 +177,7 @@ export function Today() {
           })}
         >
           {headlineLabel && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP }}>
               <CategoryDot slug={day.headline.slug} />
               <Typography variant="label2" weight="bold" color="semantic.label.neutral">
                 {headlineLabel}
@@ -216,15 +225,9 @@ export function Today() {
         </SectionMessage>
       )}
 
-      <Typography
-        as="h2"
-        variant="caption1"
-        weight="bold"
-        color="semantic.label.alternative"
-        sx={{ display: 'block', margin: '24px 0 0', letterSpacing: '0.1em' }}
-      >
+      <SectionLabel as="h2" sx={{ marginTop: 24 }}>
         오늘의 지면
-      </Typography>
+      </SectionLabel>
       <Box as="ol" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {news.map((c, i) => (
           <Box as="li" key={c.slug} sx={(t) => ({ '& + &': { borderTop: `1px solid ${t.semantic.line.normal.alternative}` } })}>
@@ -250,13 +253,12 @@ export function Today() {
                 aria-hidden
                 variant="label1"
                 weight="medium"
-                color="semantic.label.alternative"
-                sx={{ fontFamily: SERIF, fontVariantNumeric: 'tabular-nums', lineHeight: '20px' }}
+                sx={(t) => ({ ...SERIF_TYPE.issueIndex, color: metaColor(t) })}
               >
                 {String(i + 1).padStart(2, '0')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 20 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP, minHeight: 20 }}>
                   <CategoryDot slug={c.slug} />
                   <Typography variant="label2" weight="bold" color="semantic.label.neutral">
                     {c.label}
@@ -290,16 +292,9 @@ export function Today() {
             borderTop: `2px solid ${t.semantic.label.normal}`,
           })}
         >
-          <Typography as="p" variant="caption1" weight="bold" color="semantic.label.alternative" sx={{ display: 'block', letterSpacing: '0.1em' }}>
-            오늘의 말씀
-          </Typography>
-          <Typography
-            as="p"
-            variant="headline1"
-            weight="medium"
-            color="semantic.label.normal"
-            sx={{ display: 'block', marginTop: 14, fontFamily: SERIF, lineHeight: 1.8, letterSpacing: '-0.01em', wordBreak: 'keep-all' }}
-          >
+          <SectionLabel as="p">오늘의 말씀</SectionLabel>
+          {/* 상세 화면 말씀 인용과 같은 SERIF_TYPE.word */}
+          <Typography as="p" color="semantic.label.normal" sx={{ display: 'block', marginTop: 14, ...SERIF_TYPE.word }}>
             {word.summary}
           </Typography>
         </Box>

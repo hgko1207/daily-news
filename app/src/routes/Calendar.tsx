@@ -1,9 +1,8 @@
-import { Box, Chip, IconButton, ListCell, Typography } from '@wanteddev/wds';
-import { IconChevronLeft, IconChevronRight, IconChevronRightSmall } from '@wanteddev/wds-icon';
+import { Box, Chip, IconButton, Typography } from '@wanteddev/wds';
+import { IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { CHIP_HIT, Caption, CategoryDot, ErrorView, ListSkeleton, Page, longDate } from '../layout.tsx';
+import { CHIP_GAP, CHIP_HIT, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, longDate, metaColor } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 import type { IndexDay } from '../types.ts';
 
@@ -15,7 +14,6 @@ const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
  */
 export function Calendar() {
   const { index, reloadIndex } = useStore();
-  const navigate = useNavigate();
   const data = index.status === 'ready' ? index.data : null;
   const [selected, setSelected] = useState<string | null>(null);
   const [month, setMonth] = useState<string | null>(null);
@@ -68,7 +66,7 @@ export function Calendar() {
         </IconButton>
       </Box>
 
-      <Box role="group" aria-label="카테고리 필터" sx={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 12 }}>
+      <Box role="group" aria-label="카테고리 필터" sx={{ display: 'flex', gap: CHIP_GAP, overflowX: 'auto', paddingBottom: 12 }}>
         <Chip size="small" variant="outlined" sx={CHIP_HIT} active={!filter} onClick={() => setFilter(null)}>
           전체
         </Chip>
@@ -79,9 +77,13 @@ export function Calendar() {
         ))}
       </Box>
 
-      <Box role="grid" aria-label="날짜 선택" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', rowGap: 4 }}>
+      {/*
+        방향키 이동이 없는 grid 역할은 구조만 약속하고 동작은 안 해서 뺐다(Technical Audit P2).
+        날짜 버튼마다 요일까지 든 이름이 있어 요일 머리글은 화면용으로만 둔다.
+      */}
+      <Box role="group" aria-label="날짜 선택" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', rowGap: 4 }}>
         {WEEK.map((w) => (
-          <Typography key={w} role="columnheader" variant="caption1" color="semantic.label.alternative" align="center" sx={{ display: 'block', padding: '4px 0' }}>
+          <Typography key={w} aria-hidden variant="caption1" align="center" sx={(t) => ({ display: 'block', padding: '4px 0', color: metaColor(t) })}>
             {w}
           </Typography>
         ))}
@@ -94,22 +96,24 @@ export function Calendar() {
               key={date}
               as="button"
               type="button"
-              role="gridcell"
-              aria-selected={isSel}
+              aria-pressed={isSel}
               aria-label={`${longDate(date)}${enabled ? '' : ', 브리핑 없음'}`}
               disabled={!enabled}
               onClick={() => setSelected(date)}
               sx={(t) => ({
                 position: 'relative',
-                width: 44,
-                height: 44,
+                // 44px 고정이면 7칸이 308px이라 폭 340px 미만 화면에서 넘쳤다(Technical Audit P2, WCAG 1.4.10).
+                // 칸 폭까지 줄어들되 44px를 넘지 않는다. 폭 320 화면에서 41px.
+                width: '100%',
+                maxWidth: 44,
+                aspectRatio: '1',
                 justifySelf: 'center',
                 border: 0,
-                borderRadius: 22,
+                borderRadius: '50%',
                 background: isSel ? t.semantic.primary.normal : 'transparent',
                 color: isSel ? t.semantic.static.white : enabled ? t.semantic.label.normal : t.semantic.label.disable,
                 fontFamily: 'inherit',
-                fontSize: 15,
+                fontSize: '0.9375rem', // body2 크기. 버튼이라 Typography 대신 크기만 맞춘다
                 fontWeight: isSel ? 700 : 500,
                 fontVariantNumeric: 'tabular-nums',
                 cursor: enabled ? 'pointer' : 'default',
@@ -145,19 +149,8 @@ export function Calendar() {
             )}
             <Box as="ul" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {preview.categories.map((c) => (
-                <ListCell
-                  key={c.slug}
-                  as="li"
-                  divider
-                  fillWidth
-                  role="link"
-                  tabIndex={0}
-                  onClick={() => navigate(`/day/${preview.date}/${c.slug}`)}
-                  onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate(`/day/${preview.date}/${c.slug}`)}
-                  trailingContent={<IconChevronRightSmall aria-hidden />}
-                  sx={{ cursor: 'pointer', minHeight: 44 }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <LinkCell key={c.slug} to={`/day/${preview.date}/${c.slug}`} chevron>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP, minWidth: 0 }}>
                     <CategoryDot slug={c.slug} />
                     <Typography variant="label1" weight="bold" sx={{ flexShrink: 0 }}>
                       {c.label}
@@ -166,7 +159,7 @@ export function Calendar() {
                       {c.summary}
                     </Typography>
                   </Box>
-                </ListCell>
+                </LinkCell>
               ))}
             </Box>
           </>

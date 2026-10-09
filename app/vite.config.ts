@@ -23,8 +23,8 @@ export default defineConfig({
         start_url: BASE,
         scope: BASE,
         display: 'standalone',
-        // Montage primary.normal / background.normal
-        theme_color: '#0066FF',
+        // Montage background.normal(라이트). manifest는 다크 값을 따로 못 둔다. 실행 후 상태 표시줄 색은 App.tsx가 테마에 맞춘다.
+        theme_color: '#FFFFFF',
         background_color: '#FFFFFF',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
