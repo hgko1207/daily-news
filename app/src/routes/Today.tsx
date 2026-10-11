@@ -3,7 +3,7 @@ import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { issueNumber, kstNow, todayView } from '../data.ts';
+import { issueNumber, kstNow, todayView, type TodayNotice } from '../data.ts';
 import { isStandalone } from '../install.ts';
 import { CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, TEXT_BUTTON_HIT, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
 import { demoteSectionMessageTitle } from '../montage-overrides.ts';
@@ -153,17 +153,14 @@ export function Today() {
         meta={
           <MetaLine
             left={issue ? `제${issue}호` : ''}
+            // 오늘 것이 아직 없으면 도착 예정을, 있으면 도착 시각을 적는다. 본문에 따로 두던 안내 줄을 여기로 합쳤다
+            // (헤더 "어제 브리핑" 배지와 같은 사실을 두 번 말하던 것, 디자인 점검 10/11 3번).
             // 도착 시각은 그날 브리핑이 커밋된 시각. generatedAt(빌드 시각)은 앱만 배포해도 바뀌어 쓰지 않는다
-            right={[!online && '오프라인', day.arrivedAt && `${kstTime(day.arrivedAt)} 도착`].filter(Boolean).join(' · ')}
+            right={[!online && '오프라인', arrivalNote(view.notice, day.arrivedAt)].filter(Boolean).join(' · ')}
           />
         }
       />
       <WeatherStrip />
-      {view.notice && (
-        <Typography as="p" variant="body2" weight="medium" color="semantic.label.neutral" sx={{ display: 'block', marginTop: 12 }}>
-          {view.notice === 'arriving' ? '오늘 브리핑은 10시쯤 도착해요' : '오늘 브리핑이 아직 없어요'}
-        </Typography>
-      )}
 
       {day.headline && (
         <Box
@@ -308,6 +305,12 @@ export function Today() {
       )}
     </TodayPage>
   );
+}
+
+function arrivalNote(notice: TodayNotice, arrivedAt: string | null | undefined): string | null {
+  if (notice === 'arriving') return '오늘 브리핑 10시쯤 도착';
+  if (notice === 'missing') return '오늘 브리핑 아직 없음';
+  return arrivedAt ? `${kstTime(arrivedAt)} 도착` : null;
 }
 
 function kstYesterday(): string {

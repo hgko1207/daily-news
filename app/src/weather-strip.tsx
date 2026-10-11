@@ -170,7 +170,8 @@ export function WeatherStrip() {
         <Typography as="p" variant="label2" weight="bold" color="semantic.label.normal">
           {place.name}
           <Typography as="span" variant="label2" weight="medium" sx={(t) => ({ color: metaColor(t) })}>
-            {` · ${day.tomorrow ? '내일 ' : ''}${day.sky} · 비 ${day.rain}%`}
+            {/* 아침엔 어제 브리핑 아래에 오늘 날씨가 붙으므로 "오늘"도 항상 적는다(디자인 점검 10/11 2번) */}
+            {` · ${day.tomorrow ? '내일' : '오늘'} ${day.sky} · 비 ${day.rain}%`}
           </Typography>
         </Typography>
         {day.advice && (
