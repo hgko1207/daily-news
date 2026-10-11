@@ -2,8 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { aggregateTickers, dedupeEvents, searchFileName } from './build-data.ts';
+import { aggregateTickers, dedupeEvents, parseArrivals, searchFileName } from './build-data.ts';
 import {
+  buildSearchDocs,
   categoryForFolder,
   extractActions,
   extractEvents,
@@ -16,6 +17,7 @@ import {
   pickHeadline,
   resolveEventDate,
   stripLeadingEmoji,
+  toPlain,
   type Entry,
 } from './parse.ts';
 
@@ -29,6 +31,41 @@ describe('stripLeadingEmoji', () => {
     ['1. 코스피 7,000선 ✅', '1. 코스피 7,000선 ✅'],
   ])('%s → %s', (input, expected) => {
     expect(stripLeadingEmoji(input)).toBe(expected);
+  });
+});
+
+describe('toPlain 표', () => {
+  it('구분 줄과 머리행을 빼고 칸을 " · "로 잇는다', () => {
+    const md = ['지수 스냅샷', '| 지수 | 기준 | 값 |', '|---|:---:|---:|', '| 코스피 | 10/8 종가 | 6,625.93 |', '| 코스닥 | 10/8 종가 | 892.27 |'].join('\n');
+    expect(toPlain(md)).toBe('지수 스냅샷 코스피 · 10/8 종가 · 6,625.93 코스닥 · 10/8 종가 · 892.27');
+  });
+
+  it('표가 아닌 세로선 문장은 그대로 둔다', () => {
+    expect(toPlain('A | B 비교')).toBe('A | B 비교');
+  });
+
+  it('실제 검색 문서에 표 문법이 남지 않는다', () => {
+    for (const folder of readdirSync(ROOT).filter((d) => d === '05_투자')) {
+      for (const f of readdirSync(join(ROOT, folder)).filter((f) => f.endsWith('.md'))) {
+        for (const doc of buildSearchDocs(readFileSync(join(ROOT, folder, f), 'utf8'), f.slice(0, 10), 'invest')) {
+          expect(doc.text, `${f} ${doc.heading}`).not.toMatch(/\|\s*-{3,}|^\s*\|/m);
+        }
+      }
+    }
+  });
+});
+
+describe('parseArrivals (도착 시각)', () => {
+  it('날짜별로 가장 이른 커밋 시각을 쓴다', () => {
+    const log = [
+      '@2026-10-09T15:00:00+09:00', '', '05_투자/2026-10-09.md', '',
+      '@2026-10-09T10:08:00+09:00', '', '01_국내경제/2026-10-09.md', '06_말씀/2026-10-09.md', '',
+      '@2026-10-08T10:09:00+09:00', '', '01_국내경제/2026-10-08.md', 'app/src/x.ts',
+    ].join('\n');
+    const a = parseArrivals(log);
+    expect(a.get('2026-10-09')).toBe('2026-10-09T01:08:00.000Z');
+    expect(a.get('2026-10-08')).toBe('2026-10-08T01:09:00.000Z');
+    expect(a.size).toBe(2);
   });
 });
 

@@ -28,6 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 브리핑 도착 시각(날짜별 첫 커밋)을 git 기록에서 읽는다. 얕은 체크아웃이면 build-data가 시각을 비운다.
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 9

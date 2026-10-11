@@ -153,7 +153,8 @@ export function Today() {
         meta={
           <MetaLine
             left={issue ? `제${issue}호` : ''}
-            right={online ? `${kstTime(data.generatedAt)} 업데이트` : `오프라인 · 마지막 업데이트 ${kstTime(data.generatedAt)}`}
+            // 도착 시각은 그날 브리핑이 커밋된 시각. generatedAt(빌드 시각)은 앱만 배포해도 바뀌어 쓰지 않는다
+            right={[!online && '오프라인', day.arrivedAt && `${kstTime(day.arrivedAt)} 도착`].filter(Boolean).join(' · ')}
           />
         }
       />

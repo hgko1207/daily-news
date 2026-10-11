@@ -1,5 +1,6 @@
 // 저장소의 브리핑 md를 읽어 app/public/data/*.json을 만든다.
 // 구조 추출 실패는 경고만 남기고(exit 0), md 읽기 같은 진짜 오류에서만 실패한다.
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -48,6 +49,43 @@ function weekday(date: string): string {
  */
 export function searchFileName(month: string, json: string): string {
   return `search-${month}.${createHash('sha256').update(json).digest('hex').slice(0, 8)}.json`;
+}
+
+const ARRIVAL_PATH_RE = /^\d{2}_[^/]+\/(\d{4}-\d{2}-\d{2})\.md$/;
+
+/**
+ * `git log --format=@%cI --name-only` 출력 → 날짜별 도착 시각(그날 브리핑 파일이 처음 커밋된 시각).
+ * 로그는 최신순이라 뒤에서 만난 값(더 이른 커밋)으로 덮어쓴다. 나중에 고친 커밋이 있어도 첫 도착 시각을 쓴다.
+ */
+export function parseArrivals(log: string): Map<string, string> {
+  const arrivals = new Map<string, string>();
+  let at = '';
+  for (const line of log.split('\n')) {
+    if (line.startsWith('@')) at = line.slice(1).trim();
+    else if (at) {
+      const date = ARRIVAL_PATH_RE.exec(line.trim())?.[1];
+      if (date) arrivals.set(date, new Date(at).toISOString());
+    }
+  }
+  return arrivals;
+}
+
+/**
+ * 오늘 탭 제호 아래 "HH:mm 도착"용. generatedAt(빌드 시각)은 앱만 배포해도 바뀌어 도착 시각으로 쓸 수 없다.
+ * 얕은 체크아웃에서는 첫 커밋이 모든 파일을 추가한 것처럼 보여 조용히 틀린 시각이 나오므로 아예 비운다.
+ */
+function readArrivals(warnings: string[]): Map<string, string> {
+  try {
+    const git = (...args: string[]) => execFileSync('git', ['-C', ROOT, '-c', 'core.quotePath=false', ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    if (git('rev-parse', '--is-shallow-repository').trim() === 'true') {
+      warnings.push('얕은 체크아웃이라 도착 시각을 비움(fetch-depth: 0 필요)');
+      return new Map();
+    }
+    return parseArrivals(git('log', '--format=@%cI', '--name-only', '--', '0*/*.md'));
+  } catch {
+    warnings.push('git 기록을 읽지 못해 도착 시각을 비움');
+    return new Map();
+  }
 }
 
 function month(date: string): string {
@@ -102,6 +140,7 @@ function main() {
   const dates = [...byDate.keys()].sort();
   const latestDate = dates.at(-1) ?? null;
   const generatedAt = new Date().toISOString();
+  const arrivals = readArrivals(warnings);
 
   rmSync(OUT, { recursive: true, force: true });
 
@@ -115,6 +154,7 @@ function main() {
       date,
       weekday: weekday(date),
       headline,
+      arrivedAt: arrivals.get(date) ?? null,
       categories: ordered.map((e) => ({ slug: e.slug, label: e.label, summary: listSummary(e, headline) })),
     };
   });

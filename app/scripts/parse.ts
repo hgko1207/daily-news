@@ -35,9 +35,33 @@ export function stripLeadingEmoji(text: string): string {
   return text.replace(LEADING_EMOJI, '').trim();
 }
 
-/** 마크다운 인라인 문법을 걷어내 평문으로 만든다. */
+const TABLE_SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+const TABLE_ROW = /^\s*\|(.*)\|\s*$/;
+
+/**
+ * 표: 구분 줄(|---|)과 머리행은 빼고, 칸은 " · "로 잇는다.
+ * 검색 미리보기에 `| 지수 | 값 |`가 그대로 보이던 문제. 행은 지우지 않아 "코스피 6,625.93" 같은 숫자는 계속 검색된다.
+ */
+function tableToPlain(md: string): string {
+  const lines = md.split('\n');
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (TABLE_SEPARATOR.test(line)) continue;
+    const row = TABLE_ROW.exec(line);
+    if (!row) {
+      out.push(line);
+      continue;
+    }
+    if (TABLE_SEPARATOR.test(lines[i + 1] ?? '')) continue; // 머리행
+    out.push(row[1]!.split('|').map((c) => c.trim()).filter(Boolean).join(' · '));
+  }
+  return out.join('\n');
+}
+
+/** 마크다운 인라인 문법(과 표)을 걷어내 평문으로 만든다. */
 export function toPlain(md: string): string {
-  return md
+  return tableToPlain(md)
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/`([^`]*)`/g, '$1')

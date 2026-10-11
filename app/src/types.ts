@@ -8,6 +8,8 @@ export interface IndexDay {
   date: string;
   weekday: string;
   headline: Headline | null;
+  /** 그날 브리핑이 처음 커밋된 시각(ISO). git 기록을 못 읽은 빌드에서는 null. */
+  arrivedAt?: string | null;
   categories: { slug: string; label: string; summary: string }[];
 }
 
