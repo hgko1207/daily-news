@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isCitationLine, splitCitation, splitTitle } from './briefing-text.ts';
 import { fetchAggregates, fetchDay, fetchIndex, hasNewBriefing, issueNumber, kstNow, todayView } from './data.ts';
 import { detectPlatform } from './install.ts';
 import { idFromHash, sectionId } from './section.ts';
@@ -204,5 +205,65 @@ describe('섹션 이동 id (Design Audit F1)', () => {
 
   it('잘못된 인코딩이어도 예외 없이 원문을 쓴다', () => {
     expect(idFromHash('#sec-%E0%A4%A')).toBe('sec-%E0%A4%A');
+  });
+});
+
+describe('splitTitle (상세 제목, 점검 6번)', () => {
+  it.each([
+    ['국내·경제 브리핑 — 2026-10-09 (금, 한글날)', '국내·경제 브리핑', '한글날'],
+    ['투자 브리핑 — 2026-10-10 (토, 국내 휴장 3일째)', '투자 브리핑', '국내 휴장 3일째'],
+    ['투자 브리핑 — 2026-10-06 (화)', '투자 브리핑', null],
+    ['개발자 — 2026-08-09 (일요일)', '개발자', null],
+    ['오늘의 말씀 — 2026-09-06 (주일)', '오늘의 말씀', null],
+    ['기업·기술 브리핑 — 2026년 7월 3일 (금)', '기업·기술 브리핑', null],
+    ['개발자 브리핑 (GitHub Trending / HN / AI 코딩 도구)', '개발자 브리핑 (GitHub Trending / HN / AI 코딩 도구)', null],
+    ['교양·생활 브리핑', '교양·생활 브리핑', null],
+    ['— 2026-07-02 (목)', '— 2026-07-02 (목)', null],
+  ])('%s', (input, name, note) => {
+    expect(splitTitle(input)).toEqual({ name, note });
+  });
+
+  it('실제 저장소 제목에서 날짜가 남거나 이름이 비지 않는다', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join, resolve } = await import('node:path');
+    const root = resolve(__dirname, '../..');
+    for (const dir of readdirSync(root).filter((d) => /^\d{2}_/.test(d))) {
+      for (const f of readdirSync(join(root, dir)).filter((f) => f.endsWith('.md'))) {
+        const h1 = readFileSync(join(root, dir, f), 'utf8').match(/^#\s+(.+)$/m)?.[1];
+        if (!h1) continue;
+        const { name } = splitTitle(h1.replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}‍️\s]+/u, ''));
+        expect(name, `${dir}/${f}`).not.toBe('');
+        if (/[—–]\s*\d{4}/.test(h1)) expect(name, `${dir}/${f}`).not.toMatch(/\d{4}-\d{2}-\d{2}|\d{4}년/);
+      }
+    }
+  });
+});
+
+describe('splitCitation (말씀 출처, 점검 9번)', () => {
+  it('장:절이 있는 끝 출처를 뗀다', () => {
+    expect(splitCitation('경우에 합당한 말은 아로새긴 은 쟁반에 금 사과니라 — 잠언 25:11 (개역개정)')).toEqual({
+      text: '경우에 합당한 말은 아로새긴 은 쟁반에 금 사과니라',
+      cite: '잠언 25:11 (개역개정)',
+    });
+    expect(splitCitation('…아니하리로다 — 시편 62:5-6')).toEqual({ text: '…아니하리로다', cite: '시편 62:5-6' });
+  });
+
+  it('장·편·절 표기와 괄호 출처도 뗀다', () => {
+    expect(splitCitation('…이루어지리라 — 잠언 16장 3절 (개역개정)').cite).toBe('잠언 16장 3절 (개역개정)');
+    expect(splitCitation('…이루시고" — 시편 37편 5절 (개역개정)').cite).toBe('시편 37편 5절 (개역개정)');
+    expect(splitCitation('…물결 같으니 — 야고보서 1장 5~6절 (개역개정)').cite).toBe('야고보서 1장 5~6절 (개역개정)');
+    expect(splitCitation('…하듯 하지 말라" (골로새서 3:23, 개역개정)')).toEqual({ text: '…하듯 하지 말라"', cite: '골로새서 3:23, 개역개정' });
+  });
+
+  it('상세 인용의 출처 줄을 알아본다', () => {
+    expect(isCitationLine('— 잠언 25:11 (개역개정)')).toBe(true);
+    expect(isCitationLine('— 시편 62편 5~6절 (개역개정)')).toBe(true);
+    expect(isCitationLine('나의 영혼아 잠잠히 하나님만 바라라')).toBe(false);
+    expect(isCitationLine('— 오늘의 묵상')).toBe(false);
+  });
+
+  it('출처가 없거나 장:절이 아니면 그대로 둔다', () => {
+    expect(splitCitation('나의 영혼아 잠잠히 하나님만 바라라')).toEqual({ text: '나의 영혼아 잠잠히 하나님만 바라라', cite: null });
+    expect(splitCitation('말씀 — 오늘의 묵상')).toEqual({ text: '말씀 — 오늘의 묵상', cite: null });
   });
 });

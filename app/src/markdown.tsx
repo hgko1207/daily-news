@@ -3,7 +3,8 @@ import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripLeadingEmoji } from '../scripts/parse.ts';
-import { RightFade, SCROLL_MARGIN, SERIF_TYPE, useMoreToRight } from './layout.tsx';
+import { isCitationLine, splitTitle } from './briefing-text.ts';
+import { RightFade, SCROLL_MARGIN, SERIF_TYPE, metaColor, useMoreToRight } from './layout.tsx';
 import { sectionId } from './section.ts';
 
 function textOf(node: ReactNode): string {
@@ -23,11 +24,22 @@ function stripFirst(children: ReactNode): ReactNode {
 
 // 문서 제목은 h2부터 시작해 앱 제목(h1) 아래로 한 단계 내린다(D14).
 const components: Components = {
-  h1: ({ children }) => (
-    <Typography as="h2" variant="heading1" weight="bold" color="semantic.label.normal" sx={{ display: 'block', margin: '28px 0 12px' }}>
-      {stripFirst(children)}
-    </Typography>
-  ),
+  // "국내·경제 브리핑 — 2026-10-09 (금, 한글날)": 날짜·요일은 헤더(‹ 10/9 ›)와 겹쳐 떼고, 한글날 같은 정보만 아래에 남긴다(점검 6번)
+  h1: ({ children }) => {
+    const { name, note } = splitTitle(stripLeadingEmoji(textOf(children)));
+    return (
+      <Box sx={{ margin: '28px 0 12px' }}>
+        <Typography as="h2" variant="heading1" weight="bold" color="semantic.label.normal" sx={{ display: 'block' }}>
+          {name}
+        </Typography>
+        {note && (
+          <Typography as="p" variant="label2" weight="medium" sx={(t) => ({ display: 'block', marginTop: 4, color: metaColor(t) })}>
+            {note}
+          </Typography>
+        )}
+      </Box>
+    );
+  },
   h2: ({ children }) => {
     const text = stripLeadingEmoji(textOf(children));
     return (
@@ -160,6 +172,16 @@ function TableScroll({ children }: { children: ReactNode }) {
 // 말씀 본문 인용은 오늘 탭과 같은 세리프로, 면 없이 괘선 사이에 둔다.
 const wordComponents: Components = {
   ...components,
+  // "— 잠언 25:11 (개역개정)" 줄은 본문 세리프와 구분해 작은 고딕으로(점검 9번, 오늘 탭과 같은 모양)
+  p: ({ children }) => {
+    const text = textOf(children).trim();
+    if (!isCitationLine(text)) return <Typography as="p" variant="body1-reading" color="semantic.label.normal" sx={{ display: 'block', margin: '0 0 12px' }}>{children}</Typography>;
+    return (
+      <Typography as="p" className="cite" variant="label1" weight="medium" sx={(t) => ({ display: 'block', margin: '0 0 12px', color: metaColor(t) })}>
+        {text.replace(/^[—–]\s*/, '')}
+      </Typography>
+    );
+  },
   blockquote: ({ children }) => (
     <Box
       as="blockquote"
@@ -168,7 +190,7 @@ const wordComponents: Components = {
         padding: '16px 0',
         borderTop: `1px solid ${t.semantic.line.normal.normal}`,
         borderBottom: `1px solid ${t.semantic.line.normal.normal}`,
-        '& p': SERIF_TYPE.word,
+        '& p:not(.cite)': SERIF_TYPE.word,
         '& p:last-child': { marginBottom: 0 },
       })}
     >

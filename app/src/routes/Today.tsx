@@ -3,6 +3,7 @@ import { IconChevronRightSmall } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { splitCitation } from '../briefing-text.ts';
 import { issueNumber, kstNow, todayView, type TodayNotice } from '../data.ts';
 import { isStandalone } from '../install.ts';
 import { CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, TEXT_BUTTON_HIT, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
@@ -57,10 +58,13 @@ function Masthead({ meta }: { meta?: ReactNode }) {
   );
 }
 
-/** "오늘의 지면"·"오늘의 말씀"처럼 지면을 여는 작은 머리글. 넓은 자간으로 본문과 구분한다. */
+/**
+ * "오늘의 지면"·"오늘의 말씀"처럼 지면을 여는 작은 머리글. 굵기·색으로 본문과 구분한다.
+ * 자간은 조금만: 0.1em이면 12px 한글이 "오 늘 의 지 면"처럼 흩어져 보였다(점검 10번).
+ */
 function SectionLabel({ as, children, sx }: { as: 'h2' | 'p'; children: ReactNode; sx?: Record<string, unknown> }) {
   return (
-    <Typography as={as} variant="caption1" weight="bold" sx={(t) => ({ display: 'block', letterSpacing: '0.1em', color: metaColor(t), ...sx })}>
+    <Typography as={as} variant="caption1" weight="bold" sx={(t) => ({ display: 'block', letterSpacing: '0.04em', color: metaColor(t), ...sx })}>
       {children}
     </Typography>
   );
@@ -116,6 +120,7 @@ export function Today() {
 
   const news = day.categories.filter((c) => c.slug !== 'word');
   const word = day.categories.find((c) => c.slug === 'word');
+  const verse = word ? splitCitation(word.summary) : null;
   const headlineLabel = day.headline ? day.categories.find((c) => c.slug === day.headline!.slug)?.label : undefined;
   const issue = issueNumber(data, day.date);
   const href = (slug: string) => `/day/${day.date}/${slug}`;
@@ -297,10 +302,15 @@ export function Today() {
           })}
         >
           <SectionLabel as="p">오늘의 말씀</SectionLabel>
-          {/* 상세 화면 말씀 인용과 같은 SERIF_TYPE.word */}
+          {/* 상세 화면 말씀 인용과 같은 SERIF_TYPE.word. 끝의 "— 잠언 25:11" 출처는 떼어 작은 고딕으로(점검 9번) */}
           <Typography as="p" color="semantic.label.normal" sx={{ display: 'block', marginTop: 14, ...SERIF_TYPE.word }}>
-            {word.summary}
+            {verse!.text}
           </Typography>
+          {verse!.cite && (
+            <Typography as="p" variant="label1" weight="medium" sx={(t) => ({ display: 'block', marginTop: 8, color: metaColor(t) })}>
+              {verse!.cite}
+            </Typography>
+          )}
         </Box>
       )}
     </TodayPage>
