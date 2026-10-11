@@ -11,8 +11,8 @@ export interface Place {
   lat: number;
   lon: number;
   name: string;
-  /** gps: 내 위치 / denied: 권한 거절로 서울 / unavailable: 위치를 못 찾아 서울 */
-  source: 'gps' | 'denied' | 'unavailable';
+  /** gps: 내 위치 / denied: 권한 거절로 서울 / unavailable: 위치를 못 찾아 서울 / fixed: 설정에서 서울로 고정(자동으로 다시 찾지 않음) */
+  source: 'gps' | 'denied' | 'unavailable' | 'fixed';
 }
 
 export interface Forecast {
@@ -159,6 +159,12 @@ export function locate(): Promise<GeolocationPosition> {
   });
 }
 
+/** 지금 위치 → 동 이름까지. 이름을 못 찾으면 "내 위치". 실패하면 GeolocationPositionError를 그대로 던진다(code 1 = 거절). */
+export async function gpsPlace(): Promise<Place> {
+  const { latitude: lat, longitude: lon } = (await locate()).coords;
+  return { lat, lon, name: (await placeName(lat, lon)) ?? '내 위치', source: 'gps' };
+}
+
 /** 위치 권한이 이미 허용돼 있는지. 묻지 않고 확인만 한다(Permissions API가 없으면 false). */
 export async function locationGranted(): Promise<boolean> {
   try {
@@ -181,6 +187,15 @@ export function loadSaved(): Saved {
     return JSON.parse(localStorage.getItem(KEY) ?? '{}') as Saved;
   } catch {
     return {};
+  }
+}
+
+/** 설정의 "위치 정보 지우기". 오늘 탭은 다시 "내 위치 날씨 보기"부터 시작한다. */
+export function clearSaved(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* 저장소 접근 불가 시 무시 */
   }
 }
 

@@ -1,9 +1,10 @@
 import { Box, Button, Divider, SectionHeader, SegmentedControl, SegmentedControlItem, TextButton, Typography, useThemeControl, useToast } from '@wanteddev/wds';
-import { IconCircleCheckFill, IconCopy, IconRefresh } from '@wanteddev/wds-icon';
+import { IconCircleCheckFill, IconCopy, IconLocation, IconRefresh } from '@wanteddev/wds-icon';
 import { useEffect, useState, type ReactNode } from 'react';
 import { canPromptInstall, detectPlatform, isStandalone, onInstallPromptChange, promptInstall, type InstallPlatform } from '../install.ts';
 import { CHIP_HIT, Caption, Page, SCROLL_MARGIN, TEXT_BUTTON_HIT, kstTime, longDate } from '../layout.tsx';
 import { useStore } from '../store.tsx';
+import { SEOUL, clearSaved, gpsPlace, loadSaved, save, type Place } from '../weather.ts';
 
 const REPO_URL = 'https://github.com/hgko1207/daily-news';
 const APP_URL = 'https://hgko1207.github.io/daily-news/';
@@ -110,6 +111,71 @@ function InstallGuide({ platform }: { platform: InstallPlatform }) {
   }
 }
 
+/**
+ * 오늘 탭 날씨의 위치 관리(디자인 점검 10/11 8번). 한 번 허용하면 위치를 바꾸거나 지울 방법이 없었다.
+ * 저장소는 오늘 탭과 같은 weather:v1. 위치를 바꾸면 예보를 비워 오늘 탭이 새로 받게 한다.
+ */
+function WeatherSettings() {
+  const toast = useToast();
+  const [place, setPlace] = useState<Place | undefined>(() => loadSaved().place);
+  const [locating, setLocating] = useState(false);
+
+  const use = (next: Place, message: string) => {
+    save({ place: next });
+    setPlace(next);
+    toast({ content: message, variant: 'positive' });
+  };
+  const relocate = async () => {
+    setLocating(true);
+    try {
+      const next = await gpsPlace();
+      use(next, `${next.name} 기준으로 바꿨어요`);
+    } catch (e) {
+      const denied = (e as { code?: number } | null)?.code === 1;
+      toast({ content: denied ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 허용해 주세요' : '위치를 찾지 못했어요. 잠시 뒤 다시 시도해 주세요', variant: 'cautionary' });
+    } finally {
+      setLocating(false);
+    }
+  };
+  const clear = () => {
+    clearSaved();
+    setPlace(undefined);
+    toast({ content: '위치 정보를 지웠어요', variant: 'positive' });
+  };
+
+  const status = !place
+    ? '아직 정하지 않았어요. 오늘 탭에서 "내 위치 날씨 보기"를 누르면 정해져요.'
+    : place.source === 'gps'
+      ? `${place.name} · 내 위치`
+      : place.source === 'fixed'
+        ? `${place.name} · 고정`
+        : `${place.name} · 위치를 쓸 수 없어 서울 기준`;
+
+  return (
+    <>
+      <Typography as="p" variant="body2" sx={{ display: 'block' }}>
+        {status}
+      </Typography>
+      <Caption>위치는 이 기기에만 저장하고, 예보를 받을 때만 약 1km 단위로 보내요.</Caption>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+        <Button variant="outlined" color="assistive" size="small" loading={locating} leadingContent={<IconLocation />} onClick={() => void relocate()} sx={CHIP_HIT}>
+          위치 다시 찾기
+        </Button>
+        {place?.source !== 'fixed' && (
+          <Button variant="outlined" color="assistive" size="small" onClick={() => use({ ...SEOUL, source: 'fixed' }, '서울로 고정했어요')} sx={CHIP_HIT}>
+            서울로 고정
+          </Button>
+        )}
+        {place && (
+          <Button variant="outlined" color="assistive" size="small" onClick={clear} sx={CHIP_HIT}>
+            위치 정보 지우기
+          </Button>
+        )}
+      </Box>
+    </>
+  );
+}
+
 export function Settings() {
   const { index, reloadIndex } = useStore();
   const { themeOriginValue, setTheme } = useThemeControl();
@@ -144,6 +210,8 @@ export function Settings() {
           <SegmentedControlItem value="dark">다크</SegmentedControlItem>
         </SegmentedControl>,
       )}
+      <Divider />
+      {section('weather', '날씨 위치', <WeatherSettings />)}
       <Divider />
       {section(
         'data',

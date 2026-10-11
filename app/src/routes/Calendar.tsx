@@ -2,7 +2,7 @@ import { Box, Chip, IconButton, Typography } from '@wanteddev/wds';
 import { IconChevronLeft, IconChevronRight } from '@wanteddev/wds-icon';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-import { CHIP_GAP, CHIP_HIT, Caption, CategoryDot, DOT_LABEL_GAP, ErrorView, LinkCell, ListSkeleton, Page, TOUCH_44, longDate, metaColor } from '../layout.tsx';
+import { CHIP_GAP, CHIP_HIT, Caption, ErrorView, IssueRow, ListSkeleton, Page, TOUCH_44, longDate, metaColor } from '../layout.tsx';
 import { useStore } from '../store.tsx';
 import type { IndexDay } from '../types.ts';
 
@@ -151,19 +151,12 @@ export function Calendar() {
                 {preview.headline.text}
               </Typography>
             )}
+            {/* 오늘 탭 지면 행과 같은 모양(점검 5번). 여러 날을 빠르게 훑는 곳이라 요약은 1줄, 번호 없음 */}
             <Box as="ul" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {preview.categories.map((c) => (
-                <LinkCell key={c.slug} to={`/day/${preview.date}/${c.slug}`} chevron>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP, minWidth: 0 }}>
-                    <CategoryDot slug={c.slug} />
-                    <Typography variant="label1" weight="bold" sx={{ flexShrink: 0 }}>
-                      {c.label}
-                    </Typography>
-                    <Typography variant="body2" color="semantic.label.neutral" noWrap>
-                      {c.summary}
-                    </Typography>
-                  </Box>
-                </LinkCell>
+                <Box as="li" key={c.slug} sx={(t) => ({ '& + &': { borderTop: `1px solid ${t.semantic.line.normal.alternative}` } })}>
+                  <IssueRow to={`/day/${preview.date}/${c.slug}`} slug={c.slug} label={c.label} summary={c.summary} lines={1} />
+                </Box>
               ))}
             </Box>
           </>

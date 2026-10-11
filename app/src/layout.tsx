@@ -302,19 +302,73 @@ export function Page({ title, leading, trailing, toolbar, search = true, divider
  * 행 전체가 링크인 목록 행. li 안에 진짜 링크를 둬서 목록 의미를 지키고 길게 눌러 새 탭 열기·주소 복사가 된다
  * (Technical Audit P2: li role="link"였음). ListCell의 기본 역할·이름 연결은 링크 기본값으로 되돌린다.
  */
+/** 목록 행의 눌림 배경이 본문 열 밖으로 나오는 폭. 글자는 본문 열에 맞춘다. */
+export const ROW_BLEED = 12;
+
+/**
+ * 그날 지면 한 줄: [번호] · 색 점 + 카테고리 · 요약. 오늘 탭 "오늘의 지면"과 지난 브리핑 미리보기가 같이 쓴다(점검 5번).
+ * 화살표 대신 눌림 배경으로 피드백한다(E안). li 안에 둔다.
+ */
+export function IssueRow({ to, slug, label, summary, index, lines = 2 }: { to: string; slug: string; label: string; summary: string; index?: number; lines?: number }) {
+  return (
+    <Box
+      as={Link}
+      to={to}
+      sx={(t) => ({
+        display: 'grid',
+        gridTemplateColumns: index === undefined ? 'minmax(0, 1fr)' : '26px minmax(0, 1fr)',
+        columnGap: 8,
+        margin: `0 -${ROW_BLEED}px`,
+        padding: `${lines === 1 ? 12 : 16}px ${ROW_BLEED}px`,
+        borderRadius: 8,
+        textDecoration: 'none',
+        color: 'inherit',
+        transition: 'background-color 120ms ease-out',
+        '@media (hover: hover)': { '&:hover': { background: t.semantic.fill.alternative } },
+        '&:active': { background: t.semantic.fill.normal },
+      })}
+    >
+      {index !== undefined && (
+        <Typography aria-hidden variant="label1" weight="medium" sx={(t) => ({ ...SERIF_TYPE.issueIndex, color: metaColor(t) })}>
+          {String(index).padStart(2, '0')}
+        </Typography>
+      )}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP, minHeight: 20 }}>
+          <CategoryDot slug={slug} />
+          <Typography variant="label2" weight="bold" color="semantic.label.neutral">
+            {label}
+          </Typography>
+        </Box>
+        <Typography
+          variant={lines === 1 ? 'body2' : 'body1-reading'}
+          weight="medium"
+          color="semantic.label.normal"
+          sx={{ display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+        >
+          {summary}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
 export function LinkCell({ to, chevron = false, children }: { to: string; chevron?: boolean; children: ReactNode }) {
   return (
-    <Box as="li">
+    // 구분선은 Montage divider 대신 행 사이 위 테두리(본문 열 전체 폭). Montage 선은 자기 안쪽 여백 기준이라
+    // 여백을 12px로 바꾸자 왼쪽 8px·오른쪽 32px 들여진 비대칭 선이 됐다. 오늘 탭·지난 브리핑 행과 같은 선
+    <Box as="li" sx={(t) => ({ '& + &': { borderTop: `1px solid ${t.semantic.line.normal.alternative}` } })}>
       <ListCell
         as={Link}
         to={to}
         role={undefined}
         aria-labelledby={undefined}
         aria-describedby={undefined}
-        divider
         fillWidth
         trailingContent={chevron ? <IconChevronRightSmall aria-hidden /> : undefined}
-        sx={{ minHeight: 44, color: 'inherit', textDecoration: 'none' }}
+        // Montage 기본 좌우 20px 안쪽 여백 때문에 글자가 본문 열보다 20px 안에서 시작했다(디자인 점검 10/11 5번).
+        // 오늘 탭 지면 행(IssueRow)과 같이 바깥 -12px·안쪽 12px로: 글자는 본문 열에, 눌림 배경만 양옆으로 12px 넓게
+        sx={{ minHeight: 44, color: 'inherit', textDecoration: 'none', marginInline: -ROW_BLEED, paddingInline: ROW_BLEED }}
       >
         {children}
       </ListCell>

@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router';
 import { splitCitation } from '../briefing-text.ts';
 import { issueNumber, kstNow, todayView, type TodayNotice } from '../data.ts';
 import { isStandalone } from '../install.ts';
-import { CategoryDot, DOT_LABEL_GAP, ErrorView, ListSkeleton, Page, SERIF_TYPE, TEXT_BUTTON_HIT, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
+import { CategoryDot, DOT_LABEL_GAP, ErrorView, IssueRow, ListSkeleton, Page, SERIF_TYPE, TEXT_BUTTON_HIT, kstTime, longDate, metaColor, useScrollRestore } from '../layout.tsx';
 import { demoteSectionMessageTitle } from '../montage-overrides.ts';
 import { useStore } from '../store.tsx';
 import { WeatherStrip } from '../weather-strip.tsx';
@@ -240,49 +240,7 @@ export function Today() {
       <Box as="ol" sx={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {news.map((c, i) => (
           <Box as="li" key={c.slug} sx={(t) => ({ '& + &': { borderTop: `1px solid ${t.semantic.line.normal.alternative}` } })}>
-            <Box
-              as={Link}
-              to={href(c.slug)}
-              sx={(t) => ({
-                display: 'grid',
-                gridTemplateColumns: '26px minmax(0, 1fr)',
-                columnGap: 8,
-                margin: '0 -12px',
-                padding: '16px 12px',
-                borderRadius: 8,
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'background-color 120ms ease-out',
-                // 화살표 대신 눌림 배경으로 피드백(E안)
-                '@media (hover: hover)': { '&:hover': { background: t.semantic.fill.alternative } },
-                '&:active': { background: t.semantic.fill.normal },
-              })}
-            >
-              <Typography
-                aria-hidden
-                variant="label1"
-                weight="medium"
-                sx={(t) => ({ ...SERIF_TYPE.issueIndex, color: metaColor(t) })}
-              >
-                {String(i + 1).padStart(2, '0')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: DOT_LABEL_GAP, minHeight: 20 }}>
-                  <CategoryDot slug={c.slug} />
-                  <Typography variant="label2" weight="bold" color="semantic.label.neutral">
-                    {c.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="body1-reading"
-                  weight="medium"
-                  color="semantic.label.normal"
-                  sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                >
-                  {c.summary}
-                </Typography>
-              </Box>
-            </Box>
+            <IssueRow to={href(c.slug)} slug={c.slug} label={c.label} summary={c.summary} index={i + 1} />
           </Box>
         ))}
       </Box>

@@ -7,6 +7,7 @@ import {
   RAIN_SHOW,
   SEOUL,
   fetchForecast,
+  gpsPlace,
   loadSaved,
   locate,
   locationGranted,
@@ -23,11 +24,6 @@ type Status = 'ask' | 'loading' | 'ready' | 'hidden';
 const FRESH_MS = 30 * 60 * 1000;
 /** 이만큼(약 1km) 움직였을 때만 동 이름을 다시 찾는다. */
 const MOVED = 0.01;
-
-async function gpsPlace(): Promise<Place> {
-  const { latitude: lat, longitude: lon } = (await locate()).coords;
-  return { lat, lon, name: (await placeName(lat, lon)) ?? '내 위치', source: 'gps' };
-}
 
 function useWeather() {
   const saved = useRef<Saved>(loadSaved());
