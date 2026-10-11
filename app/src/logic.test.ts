@@ -82,13 +82,13 @@ describe('날씨 요약 (W3)', () => {
     },
   };
 
-  it('아침에는 오늘의 출근·점심·퇴근 칸을 만든다', () => {
+  it('아침에는 오늘의 아침·점심·저녁 칸을 만든다', () => {
     const d = summarize(forecast, at('2026-10-08T07:50:00'))!;
     expect(d.tomorrow).toBe(false);
     expect(d.slots.map((s) => [s.label, s.hour, s.temp, s.sky])).toEqual([
-      ['출근', 8, 12, '맑음'],
+      ['아침', 8, 12, '맑음'],
       ['점심', 12, 21, '맑음'],
-      ['퇴근', 18, 21, '맑음'],
+      ['저녁', 18, 21, '맑음'],
     ]);
     expect([d.min, d.max, d.rain]).toEqual([11, 23, 0]);
     expect(d.advice).toBe('일교차 12° · 겉옷 챙기세요');
@@ -98,7 +98,7 @@ describe('날씨 요약 (W3)', () => {
     const d = summarize(forecast, at('2026-10-08T19:00:00'))!;
     expect(d.tomorrow).toBe(true);
     expect(d.date).toBe('2026-10-09');
-    expect(d.slots[2]).toMatchObject({ label: '퇴근', sky: '비', rain: 60 });
+    expect(d.slots[2]).toMatchObject({ label: '저녁', sky: '비', rain: 60 });
     expect(d.advice).toBe('우산 챙기세요');
   });
 

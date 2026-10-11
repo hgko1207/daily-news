@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { kstNow } from './data.ts';
 
 /**
- * 오늘 탭 날씨(W3안: 출근·점심·퇴근).
+ * 오늘 탭 날씨(W3안: 아침·점심·저녁 세 칸, 2026-10-12 출근·퇴근에서 바꿈).
  * 예보는 Open-Meteo, 동 이름은 BigDataCloud에서 받는다. 둘 다 키가 필요 없어 정적 사이트에서 바로 부른다.
  * 위치와 마지막 예보는 이 기기의 localStorage에만 둔다.
  */
@@ -49,12 +49,12 @@ export interface DayWeather {
 export const SEOUL = { lat: 37.57, lon: 126.98, name: '서울' };
 
 const SLOTS: [string, number][] = [
-  ['출근', 8],
+  ['아침', 8],
   ['점심', 12],
-  ['퇴근', 18],
+  ['저녁', 18],
 ];
 
-/** 이 시각(KST) 이후에는 내일 날씨를 보여준다. 저녁에 오늘 출근 날씨는 쓸모가 없다. */
+/** 이 시각(KST) 이후에는 내일 날씨를 보여준다. 저녁에 오늘 아침 날씨는 쓸모가 없다. */
 export const TOMORROW_FROM_HOUR = 19;
 /** 이 확률 이상이면 우산 안내, 칸에도 비 확률을 띄운다. */
 export const RAIN_ADVICE = 50;
@@ -87,7 +87,7 @@ export function advice(rain: number, min: number, max: number): string | null {
   return null;
 }
 
-/** 예보에서 오늘(저녁이면 내일)의 출근·점심·퇴근 칸을 뽑는다. 해당 날짜가 없으면 null. */
+/** 예보에서 오늘(저녁이면 내일)의 아침·점심·저녁 칸을 뽑는다. 해당 날짜가 없으면 null. */
 export function summarize(f: Forecast, now: Date = new Date()): DayWeather | null {
   const { date, minutes } = kstNow(now);
   const tomorrow = minutes >= TOMORROW_FROM_HOUR * 60;

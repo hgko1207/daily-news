@@ -74,7 +74,7 @@ const SERIF = "'Hahmlet', 'Noto Serif KR', 'AppleMyungjo', 'Batang', serif";
 export const SERIF_TYPE = {
   /** 제호 "데일리 브리핑": display3 크기(36px), 제호답게 촘촘한 행간·자간 */
   masthead: { fontFamily: SERIF, fontSize: '2.25rem', lineHeight: 1.15, letterSpacing: '-0.03em' },
-  /** 출근·점심·퇴근 기온: title3 크기(24px) */
+  /** 아침·점심·저녁 기온: title3 크기(24px) */
   temperature: { fontFamily: SERIF, fontSize: '1.5rem', lineHeight: 1.2 },
   /** 말씀 본문(오늘 탭·상세 공통): headline1 크기(18px), 읽기 행간 1.8 */
   word: { fontFamily: SERIF, fontSize: '1.125rem', fontWeight: 500, lineHeight: 1.8, letterSpacing: '-0.01em' },

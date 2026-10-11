@@ -192,6 +192,8 @@ const wordComponents: Components = {
         borderBottom: `1px solid ${t.semantic.line.normal.normal}`,
         '& p:not(.cite)': SERIF_TYPE.word,
         '& p:last-child': { marginBottom: 0 },
+        // 원문이 인용 바로 뒤에 ---를 두는 날은 인용 아래 괘선과 구분선이 두 줄로 겹쳤다(예: 9/21). 바로 뒤 구분선만 숨긴다
+        '& + hr': { display: 'none' },
       })}
     >
       {children}

@@ -117,7 +117,7 @@ function InlineAction({ children, onClick }: { children: React.ReactNode; onClic
   );
 }
 
-/** 오늘 탭 날씨(W3안): 위치·하늘·비 한 줄 + 출근·점심·퇴근 세 칸. */
+/** 오늘 탭 날씨(W3안): 위치·하늘·비 한 줄 + 아침·점심·저녁 세 칸. */
 export function WeatherStrip() {
   const { online } = useStore();
   const { status, stale, saved, request } = useWeather();
