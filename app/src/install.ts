@@ -1,4 +1,4 @@
-export type InstallPlatform = 'standalone' | 'ios-safari' | 'ios-other' | 'android' | 'desktop';
+export type InstallPlatform = 'standalone' | 'ios-safari' | 'ios-other' | 'android' | 'samsung' | 'desktop';
 
 /**
  * 설치 안내를 고를 기기 판별(Design Review D7).
@@ -13,7 +13,8 @@ export function detectPlatform(ua: string, standalone: boolean, maxTouchPoints =
     const safari = /Safari\//.test(ua) && !inApp;
     return safari ? 'ios-safari' : 'ios-other';
   }
-  if (/Android/i.test(ua)) return 'android';
+  // 삼성 인터넷은 메뉴가 아래쪽(≡)이라 Chrome 안내(오른쪽 위 ⋮)와 따로 안내한다.
+  if (/Android/i.test(ua)) return /SamsungBrowser/i.test(ua) ? 'samsung' : 'android';
   return 'desktop';
 }
 
@@ -22,18 +23,28 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+declare global {
+  interface Window {
+    __installPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
+
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
 
-/** Android Chrome의 설치 이벤트를 앱 시작 시 잡아 두었다가 설정 화면의 [앱 설치] 버튼에서 쓴다. */
+/**
+ * Android Chrome의 설치 이벤트를 [앱 설치] 버튼에서 쓴다.
+ * 이벤트는 앱 JS가 뜨기 전에 올 수 있어 index.html의 인라인 스크립트가 먼저 잡아 window.__installPrompt에 둔다.
+ */
 export function captureInstallPrompt() {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e as BeforeInstallPromptEvent;
+  deferredPrompt = window.__installPrompt ?? null;
+  window.addEventListener('installprompt-ready', () => {
+    deferredPrompt = window.__installPrompt ?? null;
     listeners.forEach((l) => l());
   });
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
+    window.__installPrompt = null;
     listeners.forEach((l) => l());
   });
 }
@@ -46,6 +57,7 @@ export async function promptInstall(): Promise<boolean> {
   if (!deferredPrompt) return false;
   const p = deferredPrompt;
   deferredPrompt = null;
+  window.__installPrompt = null;
   await p.prompt();
   const { outcome } = await p.userChoice;
   listeners.forEach((l) => l());

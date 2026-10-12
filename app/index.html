@@ -23,6 +23,14 @@
         document.documentElement.style.colorScheme = t;
       } catch (e) {}
     </script>
+    <script>
+      // Android Chrome의 설치 이벤트는 앱 JS보다 먼저 올 수 있다. 여기서 잡아 두면 설정의 [앱 설치] 버튼이 놓치지 않는다(install.ts).
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__installPrompt = e;
+        window.dispatchEvent(new Event('installprompt-ready'));
+      });
+    </script>
     <meta name="description" content="Claude가 매일 아침 정리하는 개인 브리핑" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

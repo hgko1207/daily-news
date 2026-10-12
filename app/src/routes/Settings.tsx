@@ -38,26 +38,49 @@ function InstallGuide({ platform }: { platform: InstallPlatform }) {
   const ios = (
     <Steps
       items={[
-        'Safari 아래쪽의 공유 버튼(네모에 위쪽 화살표)을 누르세요',
+        'Safari 아래쪽의 공유 버튼(네모에 위쪽 화살표)을 누르세요. 안 보이면 오른쪽 아래 ⋯을 먼저 누르세요',
         '목록을 올려 "홈 화면에 추가"를 누르세요',
-        '오른쪽 위 "추가"를 누르면 홈 화면에 브리핑 아이콘이 생겨요',
+        '"웹 앱으로 열기"가 보이면 켠 채로 두고, 오른쪽 위 "추가"를 누르면 홈 화면에 브리핑 아이콘이 생겨요',
       ]}
     />
   );
+  const installButton = canPrompt && (
+    <Button size="medium" fullWidth onClick={() => void promptInstall()} sx={{ marginTop: 8 }}>
+      앱 설치
+    </Button>
+  );
+  // Chrome 150(2026-07)부터 메뉴 이름이 "홈 화면에 추가" → "설치 및 바로가기 만들기"로 바뀌었다. 예전 이름도 함께 적는다.
+  const chromeSteps = (
+    <Steps
+      items={[
+        'Chrome 오른쪽 위 메뉴(⋮)를 누르세요',
+        '"설치 및 바로가기 만들기"를 누르세요. Chrome 버전에 따라 "앱 설치" 또는 "홈 화면에 추가"로 보여요',
+        '"바로가기 만들기"가 아니라 "설치"를 누르세요. 그래야 홈 화면과 앱 목록에 브리핑이 앱으로 생겨요',
+      ]}
+    />
+  );
+  const alreadyInstalled = <Caption>"이미 설치되어 있다"고 나오면 홈 화면이나 앱 목록에서 브리핑을 찾아 주세요.</Caption>;
   const android = (
     <>
-      {canPrompt && (
-        <Button size="medium" fullWidth onClick={() => void promptInstall()} sx={{ marginTop: 8 }}>
-          앱 설치
-        </Button>
-      )}
+      {installButton}
+      {chromeSteps}
+      {alreadyInstalled}
+    </>
+  );
+  const samsung = (
+    <>
+      {installButton}
       <Steps
         items={[
-          'Chrome 오른쪽 위 메뉴(⋮)를 누르세요',
-          '"앱 설치" 또는 "홈 화면에 추가"를 누르세요',
-          '"설치"를 누르면 홈 화면과 앱 목록에 브리핑이 생겨요',
+          '주소창 옆에 설치(⬇) 아이콘이 보이면 누르고 "설치"를 누르세요',
+          '아이콘이 없으면 아래쪽 메뉴(≡) → "현재 페이지 추가" → "홈 화면"을 누르세요',
         ]}
       />
+      <Typography as="p" variant="label1" weight="bold" sx={{ display: 'block', marginTop: 12 }}>
+        Chrome에서 열었다면
+      </Typography>
+      {chromeSteps}
+      {alreadyInstalled}
     </>
   );
 
@@ -91,6 +114,8 @@ function InstallGuide({ platform }: { platform: InstallPlatform }) {
       );
     case 'android':
       return android;
+    case 'samsung':
+      return samsung;
     case 'desktop':
       return (
         <>
