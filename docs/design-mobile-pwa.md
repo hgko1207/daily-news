@@ -243,7 +243,7 @@ daily-news/
 
 색 규칙:
 - 강조색은 `primary.normal` **하나만** 쓴다(선택된 탭, 링크, 주요 버튼).
-- 텍스트는 `label.normal`(본문), `label.alternative`(보조), `label.assistive`(메타 정보·시각).
+- 텍스트는 `label.normal`(본문), `label.neutral`(카테고리 라벨 등 한 단계 낮춘 글자), 보조·메타 글자(날짜·시각·캡션)는 `metaColor`(`label.alternative` 74%, `app/src/layout.tsx`). `label.alternative`(61%, 3.7:1)·`label.assistive`(28%, 1.7:1)는 대비 4.5:1에 못 미쳐 글자에 직접 쓰지 않는다(2026-10-09 기술 감사).
 - 카테고리 색 점은 `accent.foreground.*`: 국내·경제 `lightBlue`, 글로벌 기술 `violet`, 개발자 `cyan`, 교양·생활 `green`, 투자 `redOrange`, 말씀은 색 점 없음(굵은 괘선과 세리프 본문으로 구분, 2026-10-08).
 - 그림자는 쓰지 않는다. 영역 구분은 `line.normal.*` 구분선과 여백으로 한다.
 
@@ -256,7 +256,8 @@ daily-news/
 
 접근성·반응형 (D14: 12A):
 - 터치 영역 최소 44×44px. 리스트 행은 행 전체가 터치 영역.
-- 본문 대비 4.5:1 이상(Montage `label.*` 토큰). 색 점에는 항상 텍스트 라벨을 함께 쓰고, 색 점은 `aria-hidden`.
+- 본문 대비 4.5:1 이상. 색 점에는 항상 텍스트 라벨을 함께 쓰고, 색 점은 `aria-hidden`. Montage 컴포넌트 기본값(선택 안 된 탭·하단 탭·세그먼트 글자, 검색창 안내 문구)이 기준에 못 미쳐 `app/src/montage-overrides.ts` 한곳에서 덮어쓴다(2026-10-09 재감사).
+- 한국어 줄바꿈은 어절 단위(전역 `word-break: keep-all` + `overflow-wrap: break-word`). 터치 영역은 보이는 크기 대신 눌리는 영역으로 넓힌다(`TOUCH_44`, `hitY`).
 - 다크 모드: Montage dark 테마. 표·인용·구분선까지 시맨틱 토큰만 쓰고 하드코딩 색 금지. 기본값은 "시스템".
 - 스크린 리더: `header` / `main` / `nav` 랜드마크, 마크다운 헤딩 순서 유지(앱 제목 h1, 문서 제목은 h1 대신 h2부터 시작하도록 한 단계 내림).
 - 모션: Montage 기본 전환만. `prefers-reduced-motion: reduce`면 스와이프 전환과 토스트 애니메이션을 끈다.
@@ -345,7 +346,7 @@ STEP | 사용자 행동                     | 느낌           | 받쳐주는 �
 
 설계와 달라진 점과 이유:
 - **달력:** Montage `DateCalendar`에는 날짜별 표시(점)·비활성화 API가 없어(3.12.2 타입 정의 확인) D5의 "브리핑 있는 날 점 / 없는 날 흐리게"를 지키려고 같은 토큰으로 7열 격자를 직접 그렸다(`app/src/routes/Calendar.tsx`).
-- **보조 텍스트 색:** 캡션은 `label.assistive`(28%) 대신 `label.alternative`(61%). D14 대비 기준 때문.
+- **보조 텍스트 색:** 캡션은 `label.assistive`(28%) 대신 `label.alternative`(61%). D14 대비 기준 때문. (2026-10-09 이후 바뀜: `label.alternative`도 3.7:1이라 `metaColor` 74%로. 위 색 규칙 참고)
 - **아이콘 글꼴:** 로컬에 Pretendard가 없어 임시 아이콘의 "브"는 맑은 고딕 Bold로 렌더했다. 디자인 스킬 단계에서 교체.
 - **액션 빈 상태 문구:** "이번 주 액션을 다 해냈어요" → "최근 2주 액션을 다 해냈어요"(D18의 14일 기준과 일치).
 - **추가 의존성:** `workbox-window`(vite-plugin-pwa 등록 코드가 요구), `@emotion/react`(wds-engine peer).

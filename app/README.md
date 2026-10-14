@@ -13,7 +13,7 @@
 - 지난 브리핑: 달력으로 날짜 이동
 - 모아보기: 날짜를 가로질러 ✅ 액션, 관심 종목 언급 타임라인
 - 검색: 종목·키워드 검색
-- 설정: iPhone(Safari) / Android(Chrome) 설치 안내, 라이트·다크 테마
+- 설정: iPhone(Safari) / Android(Chrome·삼성 인터넷) 설치 안내, 라이트·다크 테마, 날씨 위치 관리(위치 다시 찾기·서울로 고정·위치 정보 지우기)
 - 스택: Vite + React + [원티드 디자인 시스템 Montage](https://github.com/wanteddev/montage-web), GitHub Actions → GitHub Pages 자동 배포
 - 앱 코드는 `app/` 폴더에 두고, 카테고리 폴더는 스케줄러만 수정합니다.
 - 디자인: Montage를 기반으로 쓰고, 제호·지면 번호·날씨 기온·말씀에만 세리프(Hahmlet)를 더했습니다. 기준은 [.impeccable.md](../.impeccable.md)
@@ -33,6 +33,12 @@ npx pnpm@9 build:data   # 브리핑 md → public/data/*.json
 npx pnpm@9 dev          # http://localhost:5173/daily-news/
 npx pnpm@9 test         # 파서·검색·날짜·날씨 로직 테스트
 ```
+
+### 디자인·접근성 규칙을 지키는 곳
+
+- 기준 문서는 [.impeccable.md](../.impeccable.md). 보조 글자는 `metaColor`, 세리프는 `SERIF_TYPE`, 터치 영역은 `TOUCH_44`·`hitY`(모두 `src/layout.tsx`).
+- Montage 기본값이 접근성 기준에 못 미치는 곳(선택 안 된 탭·하단 탭·세그먼트 글자 색, 터치 영역, 영어 접근성 라벨)은 `src/montage-overrides.ts` 한곳에서 덮어쓴다. **Montage를 올리면 이 파일의 선택자(`wds-component`, `data-role`)가 그대로인지 먼저 확인한다.**
+- 화면을 바꾼 뒤에는 `scripts/a11y-check.browser.js`로 회귀를 확인한다. 사용법은 [docs/test-plan-mobile-pwa.md](../docs/test-plan-mobile-pwa.md)의 "접근성·반응형 회귀 확인".
 
 배포: `main`에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 데이터와 앱을 빌드해 GitHub Pages에 올립니다. 스케줄러가 매일 커밋할 때도 자동으로 다시 배포돼요.
 - 원티드 패키지는 기본 `GITHUB_TOKEN`으로 설치됩니다(2026-10-07 첫 배포에서 확인). 막히면 `read:packages` PAT를 Secrets의 `WDS_PACKAGES_TOKEN`으로 등록하면 우선 사용돼요.
