@@ -1,10 +1,10 @@
 # 모바일 앱 (PWA)
 
-브리핑을 폰 홈 화면에 추가해 앱처럼 보는 뷰어입니다. 배포 주소: https://hgko1207.github.io/daily-news/
+브리핑을 폰 홈 화면에 추가해 앱처럼 보는 뷰어입니다. 배포 주소: https://news.hgko.dev/
 
 ## 로드맵
 
-**v1 · 모바일 앱 (PWA)** ✅ [배포됨](https://hgko1207.github.io/daily-news/): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
+**v1 · 모바일 앱 (PWA)** ✅ [배포됨](https://news.hgko.dev/): 폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어
 - 오늘: 아침 신문 1면처럼 구성한 화면
   - 제호 "데일리 브리핑"과 호수(그날까지 나온 브리핑 수)
   - 내 위치 날씨: 아침(8시)·점심(12시)·저녁(18시) 기온과 하늘, 비 확률, 우산·겉옷 안내. 19시부터는 내일 날씨. [Open-Meteo](https://open-meteo.com) 예보를 쓰고, 위치는 이 기기에만 저장합니다.
@@ -30,7 +30,7 @@ gh auth refresh -h github.com -s read:packages   # 처음 한 번: 원티드 패
 export NODE_AUTH_TOKEN=$(gh auth token)
 npx pnpm@9 install
 npx pnpm@9 build:data   # 브리핑 md → public/data/*.json
-npx pnpm@9 dev          # http://localhost:5173/daily-news/
+npx pnpm@9 dev          # http://localhost:5173/
 npx pnpm@9 test         # 파서·검색·날짜·날씨 로직 테스트
 ```
 

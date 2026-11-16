@@ -7,7 +7,7 @@ import { useStore } from '../store.tsx';
 import { SEOUL, clearSaved, gpsPlace, loadSaved, save, type Place } from '../weather.ts';
 
 const REPO_URL = 'https://github.com/hgko1207/daily-news';
-const APP_URL = 'https://hgko1207.github.io/daily-news/';
+const APP_URL = 'https://news.hgko.dev/';
 
 function Steps({ items }: { items: ReactNode[] }) {
   return (

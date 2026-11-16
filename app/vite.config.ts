@@ -2,8 +2,8 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// GitHub Pages 프로젝트 사이트 경로: https://hgko1207.github.io/daily-news/
-const BASE = '/daily-news/';
+// GitHub Pages 커스텀 도메인 https://news.hgko.dev/ (2026-11-16). 예전 주소 hgko1207.github.io/daily-news/는 GitHub가 넘긴다.
+const BASE = '/';
 
 export default defineConfig({
   base: BASE,

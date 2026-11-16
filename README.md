@@ -6,7 +6,7 @@
 
 - 시작일: 2026-07-01
 - 갱신: 매일 오전 10시 무렵 (KST)
-- 모바일 앱(PWA): **https://hgko1207.github.io/daily-news/** (폰에서 열고 설정 → 앱 설치 방법 참고)
+- 모바일 앱(PWA): **https://news.hgko.dev/** (폰에서 열고 설정 → 앱 설치 방법 참고)
 
 ---
 
@@ -43,7 +43,7 @@ Claude Desktop 스케줄러 (매일 ~10:00 KST)
 
 ## 모바일 앱
 
-폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어입니다: **https://hgko1207.github.io/daily-news/**
+폰 홈 화면에 추가해 앱처럼 보는 브리핑 뷰어입니다: **https://news.hgko.dev/**
 오늘 브리핑을 신문 1면처럼 보여 주고, 지난 브리핑 달력·액션 모아보기·종목/키워드 검색을 지원합니다.
 기능·로드맵·개발 방법은 [app/README.md](app/README.md), 설계·감사 문서 목록은 [docs/README.md](docs/README.md)에 있습니다.
 
